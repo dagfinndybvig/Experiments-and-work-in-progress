@@ -1,5 +1,5 @@
 # Experiments-and-work-in-progress
-Trying out ideas, including AI-assisted writing
+Trying out ideas, using AI-assisted writing
 
 In the beginning I was mostly using gen AI for code generation, but in the end that became almost trivial because the agents could clearly build anything I wanted.
 
