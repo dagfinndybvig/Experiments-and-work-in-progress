@@ -9,11 +9,13 @@ These days I am not focusing on writing for publication - it is more about looki
 
 ## The Trilogy: Intelligence, Symbol, and Form
 
-This repo now hosts a trilogy of essays exploring how symbolic forms shape what intelligence can do:
+This repo hosts a trilogy of essays exploring how symbolic forms shape what intelligence can do:
 
-1. **From Halting Problem to Imitation Game** — on Turing, computability, and the limits of mechanical reasoning.
+1. **Language(s) of Thought: A Wittgensteinian View of Fodor and the Gradually Increasing Capabilities of LLMs** (PDF) — on why cognition requires acquired formal languages, not a single innate Mentalese.
 2. **Symbolic Forms and the Plural Mind** — on Cassirer, the plurality of symbolic forms, and why language alone is not enough.
 3. **The Cartesian Moment: Analytical Geometry as Language of Thought** — on Descartes' *Geometry* as the foundational symbolic form that made extension computable, unlocking calculus and mathematical physics.
 
 Together they argue that artificial intelligence, to reach the level of practical scientific reasoning, must master formal symbolic systems — not just natural language.
+
+A related standalone essay, **From Halting Problem to Imitation Game**, explores Turing's learning-machines programme and the subordination of imitation to learning.
 
