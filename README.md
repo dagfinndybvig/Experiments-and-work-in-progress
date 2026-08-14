@@ -13,7 +13,7 @@ These days I am not focusing on writing for publication - it is more about looki
 
 This repo hosts a trilogy of essays exploring how symbolic forms shape what intelligence can do:
 
-1. **Language(s) of Thought: A Wittgensteinian View of Fodor and the Gradually Increasing Capabilities of LLMs** (PDF, [MD](Language_s_of_Thought.md)) — on why cognition requires acquired formal languages, not a single innate Mentalese.
+1. **Language(s) of Thought: A Wittgensteinian View of Fodor and the Gradually Increasing Capabilities of LLMs** ([MD](Language_s_of_Thought.md)) — on why cognition requires acquired formal languages, not a single innate Mentalese.
 2. **Symbolic Forms and the Plural Mind** — on Cassirer, the plurality of symbolic forms, and why language alone is not enough.
 3. **The Cartesian Moment: Analytical Geometry as Language of Thought** — on Descartes' *Geometry* as the foundational symbolic form that made extension computable, unlocking calculus and mathematical physics.
 
