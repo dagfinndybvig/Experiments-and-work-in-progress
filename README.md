@@ -1,3 +1,4 @@
+<img width="1254" height="1254" alt="Thinker" src="https://github.com/user-attachments/assets/2eb48e46-a29c-476f-a962-5c53acfaa6d0" />
 # Experiments-and-work-in-progress
 Trying out ideas, using AI-assisted writing
 
