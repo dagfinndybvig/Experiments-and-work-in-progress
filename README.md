@@ -23,3 +23,5 @@ A related standalone essay, **From Halting Problem to Imitation Game**, explores
 
 A fourth essay in the series, **Constitution and Rule-Change** ([MD](Constitution_and_Rule-Change.md)), brings Wittgenstein's *Remarks on the Foundations of Mathematics* into conversation with Cassirer, arguing that the constitutive claim can be relocated from objects to practices — and that this normative reading is both more defensible and more directly testable against the reasoning-compute trend.
 
+A fifth essay, **The Fork and the Form** ([MD](The_Fork_and_the_Form.md)), situates the series in the empiricism-rationalism debate, arguing that the constitutive claim challenges Hume's fork at its strongest point — the analytic necessity of relations of ideas — and that the asymptote of language-only reasoning is the empirical trace of Hume's underestimation of what formal forms contribute even to the analytic side.
+
