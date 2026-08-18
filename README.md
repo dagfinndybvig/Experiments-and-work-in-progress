@@ -21,3 +21,5 @@ Together they argue that artificial intelligence, to reach the level of practica
 
 A related standalone essay, **From Halting Problem to Imitation Game**, explores Turing's learning-machines programme and the subordination of imitation to learning.
 
+A fourth essay in the series, **Constitution and Rule-Change** ([MD](Constitution_and_Rule-Change.md)), brings Wittgenstein's *Remarks on the Foundations of Mathematics* into conversation with Cassirer, arguing that the constitutive claim can be relocated from objects to practices — and that this normative reading is both more defensible and more directly testable against the reasoning-compute trend.
+
