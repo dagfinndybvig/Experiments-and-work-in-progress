@@ -383,7 +383,7 @@ This system could be integrated into daily operations:
 
 ## Conclusion
 
-The neuro-symbolic approach transforms library sorting from a **manual, error-prone process** into a **reliable, auditable, and flexible system**. By combining the natural language understanding of LLMs (or even simple regex patterns) with the formal reasoning power of Prolog, NTNU University Library could achieve **higher accuracy with lower cognitive load on staff** — a perfect example of how these philosophical insights about intelligence translate into practical workplace solutions.
+The neuro-symbolic approach transforms library sorting from a **manual, error-prone process** into a **reliable, auditable, and flexible system**. By combining the natural language understanding of LLMs (or even simple regex patterns) with the formal reasoning power of Prolog, a library could achieve **higher accuracy with lower cognitive load on staff** — a perfect example of how these philosophical insights about intelligence translate into practical workplace solutions.
 
 The code in this repository already implements 90% of the required infrastructure. Adapting it for library sorting would be a **straightforward application** of the existing neuro-symbolic framework to a specific domain.
 
