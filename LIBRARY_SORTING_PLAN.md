@@ -375,7 +375,7 @@ This system could be integrated into daily operations:
 
 ### Cost Estimate
 
-- **Hardware**: Existing library computers sufficient; optionally ~$500 for dedicated Raspberry Pi cluster. Could be handheld.
+- **Hardware**: Existing library computers sufficient; optionally ~$500 for dedicated Raspberry Pi cluster.
 - **Software**: Free/open source (SWI-Prolog, Python, pyswip)
 - **LLM**: Optional; can run without or with local small models (no API costs)
 - **Development**: ~6 weeks of part-time development
