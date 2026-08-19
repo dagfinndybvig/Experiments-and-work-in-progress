@@ -29,3 +29,26 @@ A sixth essay, **From Plato to Prolog to Prompts** ([MD](From_Plato_to_Prolog_to
 
 Alternate versions of the second and third essays are also available: **Symbolic Forms and the Plural Mind (Alternate Version)** ([MD](Symbolic_Forms_and_the_Plural_Mind_Alternate_Version.md)) and **The Cartesian Moment (Alternate Version)** ([MD](The_Cartesian_Moment_Alternate_Version.md)).
 
+## Neuro-Symbolic AI Demonstration
+
+To test the ideas from the Plato-to-Prolog essay, a **neuro-symbolic AI demonstration system** ([Python](neuro_symbolic_demo.py)) is included. This implements the architecture described in the essay — the bidirectional loop between linguistic interpretation (LLM/Discourse) and formal constraint (Prolog/Geometry).
+
+Run the demonstration with:
+```bash
+python neuro_symbolic_demo.py
+```
+
+Or for interactive mode:
+```bash
+python neuro_symbolic_demo.py --interactive
+```
+
+The system demonstrates:
+- Classical logic (Aristotle's syllogisms)
+- Family relationship reasoning (ontology)
+- Expert systems (MYCIN-like medical diagnosis)
+- Planning with constraints
+- The complete neuro-symbolic loop
+
+It shows concretely how Prolog provides the formal reasoning structure that LLMs lack, while LLMs provide the natural language interface that Prolog lacks — together realizing the 2,500-year-old vision of intelligence as structured representation plus structured reasoning.
+
