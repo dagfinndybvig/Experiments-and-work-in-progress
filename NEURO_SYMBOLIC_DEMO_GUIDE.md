@@ -4,9 +4,26 @@
 
 ## Overview
 
-This document explains the neuro-symbolic AI demonstration system (`neuro_symbolic_demo.py`) that accompanies the essay *From Plato to Prolog to Prompts: The 2,500-Year Journey to Artificial Reason*.
+This document explains the neuro-symbolic AI demonstration system that accompanies the essay *From Plato to Prolog to Prompts: The 2,500-Year Journey to Artificial Reason*.
 
 The demonstration implements the **neuro-symbolic architecture** described in the essay — a bidirectional loop that combines the linguistic capabilities of large language models (LLMs) with the formal reasoning power of symbolic systems like Prolog. This architecture realizes the ancient Platonic-Aristotelian vision of intelligence as the manipulation of structured representations according to structured rules.
+
+---
+
+## Two Implementations
+
+There are two implementations of the same system, kept directly comparable by sharing class names, public interface, demo scenarios, and the natural-language layer:
+
+| | `neuro_symbolic_demo.py` | `neuro_symbolic_demo_prolog.py` |
+|---|---|---|
+| Reasoning engine | Pure-Python toy Prolog (~400 lines) | Real SWI-Prolog via `pyswip` |
+| Dependencies | None (standard library only) | SWI-Prolog + `pip install pyswip` |
+| Recursion, lists, negation, CLP | No | Yes |
+| Demos 1-5 (syllogism, family, expert, planning, loop) | Yes | Yes (identical results) |
+| Demo 6 (recursive `ancestor`, list `member`) | No | Yes |
+| Best for | Reading the whole engine; running anywhere | Plugging in a real LLM that emits idiomatic Prolog |
+
+The zero-dependency version is a readable artifact: the entire backward-chaining engine is ~400 lines you can follow. The Prolog-backed version removes the ceiling of the toy engine (no lists, no real recursion, depth-limited chaining) so the formal-constraint half of the loop can do what the essay actually claims for it. Most of this guide describes the architecture and demos in terms that apply to **both** versions; differences are noted where they matter (Installation, System Components, Technical Implementation Details, and Demo 6).
 
 ---
 
@@ -149,7 +166,11 @@ The core of the system is a bidirectional loop that connects linguistic interpre
 
 ### 1. PrologEngine (Geometry Component)
 
-The `PrologEngine` class implements a Prolog-like logic programming engine.
+Both versions expose a `PrologEngine` class with the same public interface (`add_fact`, `add_rule`, `load_program`, `query`, `format_solutions`), so the rest of the system is identical. They differ in what the engine can actually do.
+
+#### Zero-dependency version (`neuro_symbolic_demo.py`)
+
+The `PrologEngine` class implements a Prolog-like logic programming engine in pure Python.
 
 **Features:**
 - **Facts**: Ground truths stored in the knowledge base (e.g., `parent(john, mary)`)
@@ -158,13 +179,28 @@ The `PrologEngine` class implements a Prolog-like logic programming engine.
 - **Backward Chaining**: Goal-directed reasoning that works backward from queries to facts
 - **Variable Unification**: Matching variables with values according to logical patterns
 - **Conjunction Handling**: Support for queries with multiple conditions (e.g., `diagnosis(D, patient1), severe(D)`)
-- **Built-in Predicates**: Comparison operators (=, !=, <, >) and arithmetic (is)
+- **Built-in Predicates**: Comparison operators (`=`, `!=`, `<`, `>`, both prefix and infix) and arithmetic (`is`)
+
+**Limitations:**
+- No list data type
+- No real recursion (depth-limited backward chaining)
+- No negation, no constraint solving
+- One fact per line in `load_program`
 
 **Implementation Details:**
 - Uses a set for facts (O(1) lookup)
 - Uses a list for rules
 - Implements depth-limited search to prevent infinite recursion
 - Supports variables (uppercase names) and constants (lowercase names)
+
+#### SWI-Prolog version (`neuro_symbolic_demo_prolog.py`)
+
+The `PrologEngine` class is a thin wrapper around SWI-Prolog via `pyswip`. It delegates all reasoning to the real engine, so it inherits full Prolog semantics: unbounded recursion, lists, negation, arithmetic, and constraint solving. The public interface is identical to the zero-dependency version, so the demos and the `LLMDiscourse` layer run unchanged.
+
+**Implementation Details:**
+- `add_fact`/`add_rule` call `assertz`; `query` calls `Prolog.query`
+- Tracks asserted predicates (name/arity) at the class level so `clear()` can retract them precisely. Class-level tracking is necessary because `pyswip.Prolog` is a singleton — all `PrologEngine` instances share one SWI-Prolog database.
+- `format_solutions` is identical to the zero-dep version, so output formatting matches.
 
 ### 2. LLMDiscourse (Discourse Component)
 
@@ -193,10 +229,21 @@ The top-level class that combines both components and provides the demonstration
 
 ### Prerequisites
 
-To run the neuro-symbolic demonstration, you need:
+**For the zero-dependency version (`neuro_symbolic_demo.py`):**
 
 - **Python 3.6 or higher** (Python 3.10+ recommended)
 - **No additional packages required** — the system uses only Python's standard library
+
+**For the SWI-Prolog version (`neuro_symbolic_demo_prolog.py`):**
+
+- **Python 3.6 or higher**
+- **SWI-Prolog** (>= 9.1 recommended; 10.x tested):
+  - Windows: `winget install SWI-Prolog.SWI-Prolog`
+  - macOS: `brew install swi-prolog`
+  - Ubuntu: `sudo apt install swi-prolog`
+- **pyswip**: `pip install pyswip`
+
+`pyswip` locates the SWI-Prolog shared library automatically on Windows and via `swipl` on PATH on Unix. If you get `SwiPrologNotFoundError`, SWI-Prolog is not installed or not on PATH.
 
 ### Installation Steps
 
@@ -209,6 +256,9 @@ cd Experiments-and-work-in-progress
 
 # Verify you can run Python
 python --version
+
+# (Prolog version only) install the Python binding
+pip install pyswip
 ```
 
 #### Option 2: Download Just the Demo File
@@ -233,8 +283,9 @@ source ns_demo_env/bin/activate
 # On Windows:
 ns_demo_env\Scripts\activate
 
-# The demo has no external dependencies, but you can install
-# a modern Python version if needed
+# The zero-dep version has no external dependencies.
+# For the Prolog version:
+pip install pyswip
 ```
 
 ### Verifying Installation
@@ -243,8 +294,11 @@ ns_demo_env\Scripts\activate
 # Check Python version
 python --version
 
-# Run a quick test
+# Zero-dependency version
 python -c "from neuro_symbolic_demo import NeuroSymbolicSystem; print('Installation successful!')"
+
+# SWI-Prolog version (requires SWI-Prolog + pyswip)
+python -c "from neuro_symbolic_demo_prolog import NeuroSymbolicSystem; print('Installation successful!')"
 ```
 
 If you see "Installation successful!", the system is ready to use.
@@ -255,20 +309,31 @@ If you see "Installation successful!", the system is ready to use.
 
 ### Basic Usage
 
-To run all demonstrations:
+To run all demonstrations with the zero-dependency version:
 
 ```bash
 python neuro_symbolic_demo.py
 ```
 
-This will execute all five demonstrations sequentially:
+Or with the SWI-Prolog version (requires SWI-Prolog + pyswip):
+
+```bash
+python neuro_symbolic_demo_prolog.py
+```
+
+This will execute the demonstrations sequentially:
 1. Classical Logic (Aristotle's Syllogism)
 2. Family Relationships (Platonic Ontology)
 3. Expert System (Medical Diagnosis)
 4. Planning (Constraint-Based Reasoning)
 5. Complete Neuro-Symbolic Loop
+6. Real Prolog Power (recursion and lists) — **Prolog version only**
+
+Demos 1-5 produce identical results in both versions. Demo 6 runs only in the Prolog-backed version because it exercises unbounded recursion and list membership, which the toy engine cannot do.
 
 ### Command-Line Options
+
+Both versions accept the same flags:
 
 ```bash
 # Run demonstrations
@@ -283,6 +348,8 @@ python neuro_symbolic_demo.py -i
 python neuro_symbolic_demo.py --help
 python neuro_symbolic_demo.py -h
 ```
+
+Substitute `neuro_symbolic_demo_prolog.py` for the SWI-Prolog version.
 
 ### Sample Output
 
@@ -307,7 +374,7 @@ Formal representation (Geometry):
   mortal(X) :- man(X).
 
 Query: mortal(socrates).
-Result: {X = socrates}.
+Result: true.
 
 Reinterpretation (Discourse):
   Yes, Socrates is mortal.
@@ -360,21 +427,23 @@ ns> rule grandparent(X, Z) :- parent(X, Y), parent(Y, Z).
 Added rule: grandparent(X, Z) :- parent(X, Y), parent(Y, Z)
 
 ns> query grandparent(X, bob).
-{X = john, Y = mary, Z = bob}.
+{X = john}.
 
-ns> natural Who is the grandfather of Bob?
+ns> natural John is the father of Mary. Mary is the mother of Bob. Who is the grandfather of Bob?
 
 Trace:
   Domain: family
   Interpretations: ['parent(john, mary).', 'parent(mary, bob).']
-  Formal query: grandparent(X, bob)
-  Solutions: [{'X': 'john', 'Y': 'mary', 'Z': 'bob'}]
+  Formal query: grandfather(X, bob).
+  Solutions: [{'X': 'john'}]
   Verification: True
-  Reinterpretation: Solution: X is john, Y is mary, Z is bob
+  Reinterpretation: Solution: X is john
 
 ns> quit
 Goodbye!
 ```
+
+Note: ground queries (e.g., `query mortal(socrates)`) print `true.` rather than leaking internal rule variables, because the formatter filters bindings to the query's own variables.
 
 ---
 
@@ -382,7 +451,11 @@ Goodbye!
 
 ### PrologEngine Internals
 
-#### Data Structures
+The two versions share the same public interface but differ entirely in internals.
+
+#### Zero-dependency version (`neuro_symbolic_demo.py`)
+
+##### Data Structures
 
 ```python
 # Facts are stored as strings in a set
@@ -395,7 +468,7 @@ self.rules = [
     ...
 ]
 
-# Built-in predicates
+# Built-in predicates (both prefix and infix forms are recognized)
 self.builtins = {
     '=': self._builtin_equals,
     '!=': self._builtin_not_equals,
@@ -405,7 +478,7 @@ self.builtins = {
 }
 ```
 
-#### Key Algorithms
+##### Key Algorithms
 
 1. **Unification (`_match` and `_match_with_bindings`)**
    - Matches a pattern against a fact or rule head
@@ -415,8 +488,9 @@ self.builtins = {
 2. **Backward Chaining (`_solve_goal`)**
    - Goal-directed reasoning
    - Starts with the query and works backward to find supporting facts
-   - Uses depth-first search with iterative deepening
+   - Uses depth-first search with a depth limit to prevent infinite recursion
    - Handles both facts and rules
+   - Recognizes builtins in both prefix (`>(A, B)`) and infix (`A > B`) form
 
 3. **Conjunction Solving (`_solve_conjunction`)**
    - Solves queries with multiple conditions (e.g., `A, B, C`)
@@ -428,6 +502,17 @@ self.builtins = {
    - Handles commas inside parentheses correctly
    - Example: `"parent(X, Y), parent(Y, Z)"` → `['parent(X, Y)', 'parent(Y, Z)']`
 
+#### SWI-Prolog version (`neuro_symbolic_demo_prolog.py`)
+
+The `PrologEngine` class is a thin wrapper around `pyswip.Prolog`. There is no custom unification or backward-chaining code — all reasoning is delegated to SWI-Prolog:
+
+- `add_fact(f)` / `add_rule(r)` → `self._prolog.assertz(...)`, with the predicate indicator tracked for later retraction
+- `query(g)` → `list(self._prolog.query(g))`, normalized to string-valued dicts
+- `clear()` → `retractall` for every tracked predicate indicator
+- `format_solutions` is identical to the zero-dep version
+
+Because `pyswip.Prolog` is a singleton (all instances share one SWI-Prolog database), predicate tracking is kept at the class level so `clear()` retracts everything any instance ever asserted, not just the current one.
+
 ### LLMDiscourse Internals
 
 #### Domain Knowledge Structure
@@ -436,8 +521,8 @@ self.builtins = {
 self.domain_knowledge = {
     'classical_logic': {
         'interpreters': {
-            r'(?i)\b(all|every)\s+(\w+)\s+are\s+(\w+)': 
-                lambda m: f"{m.group(1)}(X) :- {m.group(2)}(X).",
+            r'(?i)\b(all|every)\s+(\w+)\s+are\s+(\w+)':
+                lambda m: f"{self._singularize(m.group(3))}(X) :- {self._singularize(m.group(2))}(X).",
             # More patterns...
         },
         'reinterpreters': {...}
@@ -445,13 +530,15 @@ self.domain_knowledge = {
     'family': {
         'interpreters': {
             r'(?i)(\w+)\s+is\s+the\s+(mother|father|parent)\s+of\s+(\w+)':
-                lambda m: f"parent({m.group(3)}, {m.group(1)}).",
+                lambda m: f"parent({m.group(1).lower()}, {m.group(3).lower()}).",
             # More patterns...
         }
     },
     # More domains...
 }
 ```
+
+The `interpret` method iterates matches with `re.finditer` (not `re.findall`) so each handler receives a match object and can call `.group()`. Constants are lowercased so proper nouns like "Socrates" become Prolog constants (`socrates`), not variables. A `_singularize` helper reduces plural nouns ("men" → "man") for the `all X are Y` rule.
 
 #### Natural Language Processing
 
@@ -488,7 +575,7 @@ The system uses **regex-based pattern matching** to interpret natural language:
    - Needs to prove `man(socrates)`
    - Finds the fact `man(socrates)` ✓
 
-4. **Result**: `{X = socrates}.` → "Yes, Socrates is mortal."
+4. **Result**: `true.` → "Yes, Socrates is mortal."
 
 **Key Insight**: This demonstrates how a simple rule (`mortal(X) :- man(X)`) captures Aristotle's syllogistic reasoning in computational form.
 
@@ -517,7 +604,7 @@ The system uses **regex-based pattern matching** to interpret natural language:
    - For `parent(Y, bob)`: matches `parent(mary, bob)` → `Y = mary`
    - For `parent(X, mary)`: matches `parent(john, mary)` → `X = john`
 
-4. **Result**: `{X = john, Y = mary, Z = bob}.` → "John is the grandfather of Bob."
+4. **Result**: `{X = john}.` → "John is the grandfather of Bob."
 
 **Key Insight**: This shows **multi-hop reasoning** — the system can chain multiple relationships together, just as Plato's Forms organize the world into structured kinds.
 
@@ -546,7 +633,7 @@ The system uses **regex-based pattern matching** to interpret natural language:
    - For `diagnosis(flu, patient1)`: needs `symptom(patient1, fever), symptom(patient1, cough)` ✓
    - For `diagnosis(cold, patient1)`: needs `symptom(patient1, cough), symptom(patient1, headache)` ✓
 
-4. **Result**: `{Disease = flu, X = patient1}.` and `{Disease = cold, X = patient1}.`
+4. **Result**: `{Disease = flu}.` and `{Disease = cold}.`
 
 5. **Conjunction Query**: `diagnosis(D, patient1), severe(D).`
    - Finds only flu (since cold is mild)
@@ -599,6 +686,36 @@ This demonstration shows all steps of the loop:
 
 **Key Insight**: This is the **complete neuro-symbolic architecture** — the fusion of LLM and Prolog that the essay argues is the future of AI.
 
+### Demo 6: Real Prolog Power (recursion and lists) — Prolog version only
+
+**Scenario**: Programs the toy engine cannot run — unbounded recursion and list membership.
+
+**Process**:
+
+1. **Formalization**:
+   ```prolog
+   parent(john, mary).
+   parent(mary, bob).
+   parent(bob, alice).
+   parent(alice, charlie).
+
+   ancestor(X, Y) :- parent(X, Y).
+   ancestor(X, Z) :- parent(X, Y), ancestor(Y, Z).
+
+   member(X, [X|_]).
+   member(X, [_|T]) :- member(X, T).
+   ```
+
+2. **Queries**:
+   - `ancestor(X, charlie).` — all ancestors of Charlie, 4 generations deep
+   - `ancestor(john, X).` — all descendants of John
+   - `member(3, [1, 2, 3, 4]).` — list membership test
+   - `member(X, [socrates, plato, aristotle]).` — enumerate a list
+
+3. **Derivation**: SWI-Prolog resolves the recursive `ancestor/2` rule to arbitrary depth and enumerates list elements via `member/2`.
+
+**Key Insight**: The toy engine has a hard depth limit and no list data type, so it cannot run either program. This demo shows why a real Prolog backend matters: the formal-constraint half of the neuro-symbolic loop is no longer the bottleneck. An LLM that emits idiomatic Prolog (recursive rules, lists, DCGs) can be paired with an engine that actually runs it.
+
 ---
 
 ## Extending the System
@@ -639,7 +756,7 @@ elif domain == 'legal':
 
 ### Adding Built-in Predicates
 
-To add a new built-in predicate to `PrologEngine`:
+To add a new built-in predicate to the **zero-dependency** `PrologEngine`:
 
 ```python
 self.builtins = {
@@ -652,6 +769,8 @@ def _builtin_member(self, element, list_str):
     # Implement list membership check
     pass
 ```
+
+The **SWI-Prolog version** does not need this — predicates like `member/2`, `length/2`, `append/3`, and `between/3` are built into real Prolog. This is the core advantage of the Prolog backend: capabilities that require hand-implementation in the toy engine come for free.
 
 ### Loading External Knowledge Bases
 
@@ -690,6 +809,29 @@ grandparent(X, Z) :- parent(X, Y), parent(Y, Z).
 ancestor(X, Y) :- parent(X, Y).
 ancestor(X, Y) :- parent(X, Z), ancestor(Z, Y).
 ```
+
+Note: the recursive `ancestor/2` rule runs only in the SWI-Prolog version. The toy engine's depth limit prevents it from resolving the full chain.
+
+### Replacing the Regex Layer with a Real LLM
+
+The `LLMDiscourse` class is a stand-in for a real LLM — a regex-based pattern-action interpreter in the ELIZA tradition. To use an actual LLM (local via Ollama, or a hosted API), subclass `LLMDiscourse` and override `interpret` and `_extract_query` to call a model that returns structured output:
+
+```python
+class LLMDiscourseReal(LLMDiscourse):
+    def interpret(self, text, domain=None):
+        # Ask the LLM to emit JSON: {"facts": [...], "rules": [...]}
+        response = call_llm(system_prompt, text)
+        spec = parse_json(response)
+        return spec["facts"] + spec["rules"]
+
+    def _extract_query(self, text, domain):
+        # Ask the LLM to emit just the query, e.g. "mortal(socrates)."
+        return call_llm(query_prompt, text).strip()
+```
+
+The key is structured output, not free text: ask the LLM for JSON with `facts`, `rules`, and `query` fields, then validate each clause against `PrologEngine.add_fact`/`add_rule` before loading. Parse failures go back to the LLM as a revision prompt — that validation loop *is* the neuro-symbolic thesis made concrete: the LLM provides open-world language, the engine provides formal constraint, and the loop reconciles them when they disagree.
+
+The `PrologEngine` half needs no changes. With the SWI-Prolog backend, real Prolog accepts the idiomatic clauses an LLM will naturally produce (recursive rules, lists, DCGs) — which is the whole point of using a real Prolog rather than the toy engine.
 
 ---
 
@@ -753,7 +895,7 @@ The neuro-symbolic approach represents a **return to fundamentals** — a recogn
 - [From Plato to Prolog to Prompts: The 2,500-Year Journey to Artificial Reason](From_Plato_to_Prolog_to_Prompts.md)
 - [Language(s) of Thought: A Wittgensteinian View of Fodor and the Gradually Increasing Capabilities of LLMs](Language_s_of_Thought.md)
 - [Symbolic Forms and the Plural Mind](Symbolic_Forms_and_the_Plural_Mind.md)
-- [The Cartesian Moment: Analytical Geometry as Language of Thought](The_Cartesian_Moment.md)
+- [The Cartesian Moment: Analytical Geometry as Language of Thought](The_Cartesian_Moment_Alternate_Version.md)
 - [Constitution and Rule-Change: Wittgenstein's Remarks, Cassirer's Forms, and the Asymptote of Language-Only Reasoning](Constitution_and_Rule-Change.md)
 
 ---
