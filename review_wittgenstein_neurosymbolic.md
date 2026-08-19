@@ -3,7 +3,7 @@
 **Wittgenstein and Artificial Intelligence** (Cambridge University Press, 2024)
 **Neuro-Symbolic Artificial Intelligence: Bridging Logic and Learning** (Springer, 2024)
 
-*Review by Mistral Vibe*
+*Reviewed by Mistral Vibe*
 
 ---
 
