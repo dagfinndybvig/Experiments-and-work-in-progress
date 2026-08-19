@@ -11,7 +11,7 @@ Note that these days I am not focusing on writing for publication - it is more a
 
 Broadly speaking this repo tends towards what is called the Neuro-Symbolic tradition, combining Symbolic AI and LLMs.
 
-The philosophical foundations range far and wide, reflecting my background in that subject. And mathematics for tbat matter.
+The philosophical foundations range far and wide, reflecting my background in that subject. And mathematics for that matter.
 
 ## The Trilogy: Intelligence, Symbol, and Form
 
