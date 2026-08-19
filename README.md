@@ -25,3 +25,5 @@ A fourth essay in the series, **Constitution and Rule-Change** ([MD](Constitutio
 
 A fifth essay, **The Fork and the Form** ([MD](The_Fork_and_the_Form.md)), situates the series in the empiricism-rationalism debate, arguing that the constitutive claim challenges Hume's fork at its strongest point — the analytic necessity of relations of ideas — and that the asymptote of language-only reasoning is the empirical trace of Hume's underestimation of what formal forms contribute even to the analytic side.
 
+A sixth essay, **From Plato to Prolog to Prompts** ([MD](From_Plato_to_Prolog_to_Prompts.md)), extends the historical arc back to its origins in ancient Greece, arguing that Prolog and GOFAI were not failed paradigms but early instantiations of the Platonic-Aristotelian vision of structured representation and reasoning — and that modern neuro-symbolic AI finally provides the missing interface between formal systems and the open world.
+
