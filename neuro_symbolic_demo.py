@@ -254,6 +254,19 @@ class PrologEngine:
             args = [a.strip() for a in args_str.split(',') if a.strip()]
             return pred.strip(), args
         return term, []
+
+    def _parse_infix(self, goal: str) -> Optional[Tuple[str, List[str]]]:
+        """
+        Parse an infix comparison expression like 'A > B' into (op, [A, B]).
+        Returns None if the goal is not a recognized infix builtin expression.
+        Recognizes =, !=, <, > (the comparison builtins). Operands are single
+        tokens (variables or numbers); compound terms use prefix form OP(A, B).
+        """
+        goal = goal.strip().rstrip('.')
+        m = re.match(r'^(\w+)\s*(=|!=|<|>)\s*(\w+)$', goal)
+        if m and m.group(2) in self.builtins:
+            return m.group(2), [m.group(1), m.group(3)]
+        return None
     
     def _evaluate_builtin(self, predicate: str, args: List[str]) -> bool:
         """Evaluate a builtin predicate"""
@@ -287,7 +300,16 @@ class PrologEngine:
             if self._evaluate_builtin(pred, resolved_args):
                 return [current_bindings.copy()]
             return []
-        
+
+        # Check if this is an infix comparison expression (e.g., A > B)
+        infix = self._parse_infix(goal)
+        if infix is not None:
+            op, operands = infix
+            resolved = [self._resolve(o, current_bindings) for o in operands]
+            if self._evaluate_builtin(op, resolved):
+                return [current_bindings.copy()]
+            return []
+
         results = []
         
         # First, try to match against facts
@@ -441,20 +463,32 @@ class LLMDiscourse:
         self.prolog = prolog_engine
         self.domain_knowledge = {}
         self._init_domain_knowledge()
-    
+
+    @staticmethod
+    def _singularize(word: str) -> str:
+        """Reduce a plural noun to its singular form (best-effort heuristic)."""
+        word = word.lower()
+        if word in ('men', 'women'):
+            return word[:-2] + 'an'  # men -> man, women -> woman
+        if word.endswith('ies') and len(word) > 3:
+            return word[:-3] + 'y'   # cities -> city
+        if word.endswith('s') and not word.endswith('ss'):
+            return word[:-1]         # dogs -> dog
+        return word
+
     def _init_domain_knowledge(self):
         """Initialize with some domain-specific templates"""
         # Classical logic
         self.domain_knowledge['classical_logic'] = {
             'interpreters': {
-                r'(?i)\b(all|every)\s+(\w+)\s+are\s+(\w+)': 
-                    lambda m: f"{m.group(1)}(X) :- {m.group(2)}(X).",
+                r'(?i)\b(all|every)\s+(\w+)\s+are\s+(\w+)':
+                    lambda m: f"{self._singularize(m.group(3))}(X) :- {self._singularize(m.group(2))}(X).",
                 r'(?i)\b(some|a|an)\s+(\w+)\s+are\s+(\w+)':
-                    lambda m: f"{m.group(1)}(X) :- {m.group(2)}(X), {m.group(3)}(X).",
+                    lambda m: f"{self._singularize(m.group(3))}(X) :- {self._singularize(m.group(2))}(X).",
                 r'(?i)(\w+)\s+is\s+a\s+(\w+)':
-                    lambda m: f"{m.group(2)}({m.group(1)}).",
-                r'(?i)(\w+)\s+is\s+(\w+)':
-                    lambda m: f"{m.group(2)}({m.group(1)}).",
+                    lambda m: f"{m.group(2).lower()}({m.group(1).lower()}).",
+                r'(?i)(\w+)\s+is\s+(?!a\b|an\b|the\b)(\w+)':
+                    lambda m: f"{m.group(2).lower()}({m.group(1).lower()}).",
             },
             'reinterpreters': {
                 'true': 'Yes, that is correct.',
@@ -466,11 +500,11 @@ class LLMDiscourse:
         self.domain_knowledge['family'] = {
             'interpreters': {
                 r'(?i)(\w+)\s+is\s+the\s+(mother|father|parent)\s+of\s+(\w+)':
-                    lambda m: f"parent({m.group(3)}, {m.group(1)}).",
+                    lambda m: f"parent({m.group(1).lower()}, {m.group(3).lower()}).",
                 r'(?i)(\w+)\s+is\s+the\s+(son|daughter|child)\s+of\s+(\w+)':
-                    lambda m: f"parent({m.group(3)}, {m.group(1)}).",
+                    lambda m: f"parent({m.group(3).lower()}, {m.group(1).lower()}).",
                 r'(?i)(\w+)\s+and\s+(\w+)\s+are\s+siblings':
-                    lambda m: f"parent(X, {m.group(1)}), parent(X, {m.group(2)}).",
+                    lambda m: f"parent(X, {m.group(1).lower()}), parent(X, {m.group(2).lower()}).",
             },
             'reinterpreters': {}
         }
@@ -508,8 +542,7 @@ class LLMDiscourse:
         if domain in self.domain_knowledge:
             patterns = self.domain_knowledge[domain].get('interpreters', {})
             for pattern, handler in patterns.items():
-                matches = re.findall(pattern, text)
-                for match in matches:
+                for match in re.finditer(pattern, text):
                     try:
                         prolog_text = handler(match)
                         if prolog_text:
@@ -544,22 +577,22 @@ class LLMDiscourse:
         # Pattern: X is a Y
         matches = re.findall(r'(\w+)\s+is\s+(?:a|an|the)\s+(\w+)', text, re.IGNORECASE)
         for subj, obj in matches:
-            results.append(f"{obj}({subj}).")
-        
+            results.append(f"{obj.lower()}({subj.lower()}).")
+
         # Pattern: X are Y
         matches = re.findall(r'(\w+)\s+are\s+(\w+)', text, re.IGNORECASE)
         for subj, obj in matches:
-            results.append(f"{obj}({subj}).")
-        
+            results.append(f"{obj.lower()}({subj.lower()}).")
+
         # Pattern: X has Y
         matches = re.findall(r'(\w+)\s+has\s+(\w+)', text, re.IGNORECASE)
         for subj, obj in matches:
-            results.append(f"has({subj}, {obj}).")
-        
+            results.append(f"has({subj.lower()}, {obj.lower()}).")
+
         # Pattern: X Y Z (verb pattern)
         matches = re.findall(r'(\w+)\s+(\w+)\s+(\w+)', text)
         for subj, verb, obj in matches:
-            results.append(f"{verb}({subj}, {obj}).")
+            results.append(f"{verb.lower()}({subj.lower()}, {obj.lower()}).")
         
         return results if results else [f"% Interpreted: {text}"]
     
@@ -634,21 +667,29 @@ class LLMDiscourse:
             'iterations': []
         }
         
+        # Start from a clean knowledge base so the loop is self-contained
+        self.prolog.facts.clear()
+        self.prolog.rules.clear()
+
         for iteration in range(max_iterations):
             iteration_trace = {
                 'iteration': iteration + 1,
                 'input': natural_language_query if iteration == 0 else trace['reinterpretation']
             }
-            
+
             # Step 1: Interpret (LLM)
             if iteration == 0:
                 interpretations = self.interpret(natural_language_query, trace['domain'])
                 trace['interpretations'] = interpretations
                 iteration_trace['interpretations'] = interpretations
-                
+
                 # Step 2: Formalize (LLM) - load into Prolog
+                # Accumulate facts and rules rather than reloading (which clears)
                 for prog in interpretations:
-                    self.prolog.load_program(prog)
+                    if ':-' in prog:
+                        self.prolog.add_rule(prog)
+                    else:
+                        self.prolog.add_fact(prog)
                 
                 # For demo, we'll use a hardcoded query or extract one
                 # In a real system, the LLM would generate this
@@ -703,17 +744,18 @@ class LLMDiscourse:
                 return f"parent(Z, {a.lower()}), parent(Z, {b.lower()})."
         
         elif domain == 'classical_logic':
-            # "Is Socrates mortal?" -> mortal(socrates)
-            matches = re.findall(r'(?i)is\s+(\w+)\s+(\w+)', text)
-            if matches:
-                subj, pred = matches[0]
-                return f"{pred}({subj.lower()})."
-            
+            # Yes/no question: "Is Socrates a man?" -> man(socrates)
+            m = re.search(r'(?i)\bis\s+(\w+)\s+(?:a|an)\s+(\w+)\s*\?', text)
+            if m:
+                return f"{m.group(2).lower()}({m.group(1).lower()})."
+            # Yes/no question: "Is Socrates mortal?" -> mortal(socrates)
+            m = re.search(r'(?i)\bis\s+(\w+)\s+(\w+)\s*\?', text)
+            if m:
+                return f"{m.group(2).lower()}({m.group(1).lower()})."
             # "Who is mortal?" -> mortal(X)
-            matches = re.findall(r'(?i)who\s+(is|are)\s+(\w+)', text)
-            if matches:
-                _, pred = matches[0]
-                return f"{pred}(X)."
+            m = re.search(r'(?i)\bwho\s+(?:is|are)\s+(\w+)', text)
+            if m:
+                return f"{m.group(1).lower()}(X)."
         
         # Default: try to find a predicate pattern
         words = text.split()
@@ -1067,7 +1109,7 @@ three_step_prereq(A, D) :- before(A, B), before(B, C), before(C, D).
         # Step 4: Verify
         print("Step 4: VERIFY (Geometry)")
         is_verified = self.geometry.query("grandfather(john, bob)")
-        print(f"  Verify grandfather(john, bob): {self.geometry.format_solutions(is_verified)}")
+        print(f"  Verify grandfather(john, bob): {self.geometry.format_solutions(is_verified, 'grandfather(john, bob)')}")
         print()
         
         # Step 5: Reinterpret
@@ -1156,7 +1198,7 @@ def interactive_mode():
             elif cmd.lower().startswith('query '):
                 query = cmd[6:].strip().rstrip('.')
                 solutions = system.geometry.query(query)
-                print(system.geometry.format_solutions(solutions))
+                print(system.geometry.format_solutions(solutions, query))
             
             elif cmd.lower().startswith('natural '):
                 text = cmd[8:].strip()
@@ -1172,7 +1214,7 @@ def interactive_mode():
             else:
                 # Try as a query
                 solutions = system.geometry.query(cmd)
-                print(system.geometry.format_solutions(solutions))
+                print(system.geometry.format_solutions(solutions, cmd))
         
         except KeyboardInterrupt:
             print("\nUse 'quit' to exit")
