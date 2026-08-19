@@ -1,6 +1,6 @@
 # Neuro-Symbolic Library Sorting System: Implementation Plan
 
-*Applying the neuro-symbolic architecture to a real workplace challenge at NTNU University Library*
+*Applying the neuro-symbolic architecture to a real workplace challenge at a hypothetical library*
 
 ---
 
