@@ -360,6 +360,7 @@ This system could be integrated into daily operations:
 - **Returns reshelving**: Verify returned items go to correct locations
 - **Collection reorganization**: Model and validate large-scale reshelving projects before execution
 - **Training tool**: Help new staff understand sorting rules through interactive queries
+- **Portable**: With the simple hardware requirements it could even be a handheld system.
 
 ### Implementation Roadmap
 
@@ -374,7 +375,7 @@ This system could be integrated into daily operations:
 
 ### Cost Estimate
 
-- **Hardware**: Existing library computers sufficient; optionally ~$500 for dedicated Raspberry Pi cluster
+- **Hardware**: Existing library computers sufficient; optionally ~$500 for dedicated Raspberry Pi cluster. Could be handheld.
 - **Software**: Free/open source (SWI-Prolog, Python, pyswip)
 - **LLM**: Optional; can run without or with local small models (no API costs)
 - **Development**: ~6 weeks of part-time development
