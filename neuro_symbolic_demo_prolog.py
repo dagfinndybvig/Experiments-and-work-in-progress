@@ -209,17 +209,28 @@ class PrologEngine:
         a failing query returns [] (falsy). This matches the semantics
         the rest of the code relies on (``len(solutions) > 0``).
 
-        The goal is wrapped in catch/3 so that calling an undefined
-        predicate (one the Discourse layer asked about but never
-        formalized -- e.g. ``grandparent(X, bob)`` when only ``parent/2``
-        facts were loaded) fails gracefully with no solutions instead of
-        raising ``existence_error``. This matches the toy engine's lenient
-        behavior and keeps the neuro-symbolic loop from crashing when the
-        LLM/regex emits a query whose predicate has no clauses. Other
-        errors (type errors, syntax errors, ...) still propagate.
+        The goal is wrapped in two safety layers:
+
+        1. ``call_with_inference_limit/3`` caps the total inference count
+           (default 10000). This prevents infinite loops when the LLM emits
+           mutually recursive rules with no terminating base case (e.g.
+           ``cat(X) :- animal(X).`` + ``animal(X) :- cat(X).``). Legitimate
+           queries (including recursive ``ancestor/2`` over a few
+           generations) stay well under the limit; runaway recursion is
+           cut off and the goal simply fails.
+
+        2. ``catch/3`` turns a call to an undefined predicate (one the
+           Discourse layer asked about but never formalized) into a
+           graceful failure (``[]``) instead of raising
+           ``existence_error``. This matches the toy engine's lenient
+           behavior. Other errors (type errors, syntax errors, ...) still
+           propagate.
         """
         goal = goal.strip().rstrip('.')
-        wrapped = f"catch(({goal}), error(existence_error(procedure, _), _), fail)"
+        wrapped = (
+            f"catch(call_with_inference_limit(({goal}), 10000, _), "
+            f"error(existence_error(procedure, _), _), fail)"
+        )
         solutions = list(self._prolog.query(wrapped))
         # Normalize values to plain strings for display parity with the
         # toy engine. Lists and numbers stringify naturally.

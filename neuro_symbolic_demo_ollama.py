@@ -76,7 +76,7 @@ import os
 import re
 import sys
 import time
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Set
 
 import requests
 
@@ -189,6 +189,9 @@ class OllamaDiscourse(LLMDiscourse):
         self.paths: Dict[str, str] = {"interpret": "", "query": "", "reinterpret": ""}
         self.llm_calls = 0
         self.fallback_calls = 0
+        # Clauses from the last interpret() call, passed to _extract_query
+        # so the LLM can match the predicates' argument order.
+        self._last_interpretations: List[str] = []
 
     # -- prompt templates --------------------------------------------------
 
@@ -199,25 +202,43 @@ class OllamaDiscourse(LLMDiscourse):
         "clause. Facts look like \"man(socrates).\". Rules look like "
         "\"mortal(X) :- man(X).\". Use lowercase atoms and uppercase "
         "variables. Formalize only declarative statements; ignore any "
-        "question in the input. Emit no comments, no queries, no prose, "
+        "question in the input. Emit the MOST GENERAL rule for a universal "
+        "statement (e.g. \"All men are mortal\" -> \"mortal(X) :- man(X).\"), "
+        "not instance-specific copies. Do not duplicate clauses. Do not "
+        "infer facts that follow from a rule (if you emit \"mortal(X) :- "
+        "man(X).\" and \"man(socrates).\", do NOT also emit "
+        "\"mortal(socrates).\"). Emit no comments, no queries, no prose, "
         "no markdown -- just the JSON object."
     )
 
     _QUERY_SYSTEM = (
         "You are a Prolog query extractor. Given a natural-language "
-        "question, output ONLY a single Prolog query goal that can be "
-        "posed against the knowledge base, ending with a period. Examples: "
+        "question and the predicates already in the knowledge base, output "
+        "ONLY a single Prolog query goal that can be posed against that "
+        "knowledge base, ending with a period. Match the argument ORDER of "
+        "the predicates as formalized (e.g. if the rule is "
+        "\"ancestor(X, Y) :- parent(X, Y)\" then X is the ancestor and Y is "
+        "the descendant, so \"who are the ancestors of Charlie\" becomes "
+        "\"ancestor(X, charlie).\"). Use uppercase for variables. Examples: "
         "\"mortal(socrates).\", \"parent(X, mary).\", "
-        "\"grandfather(X, bob).\". Use uppercase for variables. Output the "
-        "goal only -- no prose, no markdown, no explanation."
+        "\"grandfather(X, bob).\". Output the goal only -- no prose, no "
+        "markdown, no explanation."
     )
 
     _REINTERPRET_SYSTEM = (
-        "You explain formal results in plain language. Given a Prolog "
-        "query and its solutions (a list of variable bindings, possibly "
-        "empty), write one concise natural-language answer. If the "
-        "solutions list is empty, state that the claim is false given the "
-        "available knowledge. Do not mention Prolog syntax or variables."
+        "You translate a formal verdict into one plain-language sentence. "
+        "A separate formal system has ALREADY decided whether the claim is "
+        "true or false. Your ONLY job is to phrase that decision in English. "
+        "RULES YOU MUST FOLLOW:\n"
+        "1. If VERDICT is true, your answer MUST affirm the claim. Begin "
+        "with 'Yes,' and state what is true, naming any bindings given.\n"
+        "2. If VERDICT is false, your answer MUST deny the claim. Begin "
+        "with 'No,' and say it is not supported by the available knowledge.\n"
+        "3. You MUST NOT contradict the VERDICT. You MUST NOT apply your "
+        "own reasoning, world knowledge, or judgment about whether the "
+        "claim 'should' be true. The formal system is authoritative.\n"
+        "4. Do not mention Prolog, syntax, variables, or the word verdict.\n"
+        "Write exactly one sentence."
     )
 
     # -- interpret: NL -> facts + rules -----------------------------------
@@ -225,6 +246,7 @@ class OllamaDiscourse(LLMDiscourse):
     def interpret(self, text: str, domain: str = None) -> List[str]:
         """Formalize NL into Prolog clauses via the LLM, else regex fallback."""
         if not self.client.is_available():
+            self._last_interpretations = []
             return self._fallback_interpret(text, domain)
         try:
             user = f"Domain hint: {domain or 'general'}\nStatement: {text}"
@@ -235,14 +257,24 @@ class OllamaDiscourse(LLMDiscourse):
             # assertz cannot redefine -- otherwise the loop would raise.
             candidates = [self._clean_clause(x)
                           for x in spec.get("facts", []) + spec.get("rules", [])]
-            clauses = [c for c in candidates if c and self.prolog.is_assertable(c)]
+            # Dedupe while preserving order (LLMs sometimes repeat clauses).
+            seen = set()
+            clauses = []
+            for c in candidates:
+                if c and self.prolog.is_assertable(c) and c not in seen:
+                    seen.add(c)
+                    clauses.append(c)
             if not clauses:
                 # Nothing usable came back; let the regex layer have a go.
+                self._last_interpretations = []
                 return self._fallback_interpret(text, domain)
+            # Stash for _extract_query so it can match argument order.
+            self._last_interpretations = clauses
             self.paths["interpret"] = "ollama"
             self.llm_calls += 1
             return clauses
         except Exception:
+            self._last_interpretations = []
             return self._fallback_interpret(text, domain)
 
     # -- _extract_query: NL -> one Prolog goal ----------------------------
@@ -252,11 +284,16 @@ class OllamaDiscourse(LLMDiscourse):
         if not self.client.is_available():
             return self._fallback_query(text, domain)
         try:
-            user = f"Domain hint: {domain or 'general'}\nQuestion: {text}"
+            kb = "\n".join(self._last_interpretations) if self._last_interpretations else "(none yet)"
+            user = (f"Domain hint: {domain or 'general'}\n"
+                    f"Predicates in the knowledge base:\n{kb}\n\n"
+                    f"Question: {text}")
             raw = self.client.chat(self._QUERY_SYSTEM, user, json_mode=False, temperature=0.0)
             goal = self._clean_clause(raw)
             if not goal:
                 return self._fallback_query(text, domain)
+            # Fix mis-capitalized atoms (e.g. mortal(Socrates). -> mortal(socrates).)
+            goal = self._normalize_query_args(goal, self._last_interpretations)
             self.paths["query"] = "ollama"
             self.llm_calls += 1
             return goal
@@ -266,21 +303,72 @@ class OllamaDiscourse(LLMDiscourse):
     # -- reinterpret: solutions -> NL answer ------------------------------
 
     def reinterpret(self, solutions: List[Dict[str, str]], original_query: str = None) -> str:
-        """Render solutions as a natural-language answer via the LLM, else regex."""
+        """Render solutions as a natural-language answer via the LLM, else regex.
+
+        The formal system is authoritative for truth: a non-empty solutions
+        list means the query succeeded (true); an empty list means it
+        failed (false). We compute that verdict ourselves and hand it to the
+        LLM so the model phrases the answer rather than re-judging it --
+        this is the neuro-symbolic point: the LLM provides language, Prolog
+        provides constraint, and the loop does not let the LLM override
+        the formal result.
+        """
         if not self.client.is_available():
             return self._fallback_reinterpret(solutions, original_query)
         try:
+            verdict = "true" if solutions else "false"
+            # Collect non-empty bindings for the LLM to name.
+            bindings = [sol for sol in solutions if sol]
+            # Render bindings as "Var = val" pairs so the argument position
+            # (and thus the role of each value in the predicate) is explicit.
+            if bindings:
+                pairs = []
+                for sol in bindings:
+                    pairs.append(", ".join(f"{k} = {v}" for k, v in sol.items()))
+                binding_str = "; ".join(pairs)
+            else:
+                binding_str = "none"
             user = (f"Prolog query: {original_query or '(unknown)'}\n"
-                    f"Solutions: {json.dumps(solutions)}")
+                    f"VERDICT: {verdict}\n"
+                    f"Bindings: {binding_str}\n"
+                    f"Note: in the query, the predicate's first argument is "
+                    f"the subject and the second is the object. The bound "
+                    f"values fill the variable positions shown above.")
             raw = self.client.chat(self._REINTERPRET_SYSTEM, user, json_mode=False)
             answer = raw.strip()
             if not answer:
+                return self._fallback_reinterpret(solutions, original_query)
+            # The formal system is authoritative for truth. If the LLM's
+            # phrasing contradicts the verdict (e.g. says "No" when Prolog
+            # proved true), reject it and use the deterministic regex
+            # reinterpretation instead. This is the neuro-symbolic point
+            # made concrete: the formal constraint catches the LLM's error.
+            if not self._verdict_consistent(answer, bool(solutions)):
                 return self._fallback_reinterpret(solutions, original_query)
             self.paths["reinterpret"] = "ollama"
             self.llm_calls += 1
             return answer
         except Exception:
             return self._fallback_reinterpret(solutions, original_query)
+
+    @staticmethod
+    def _verdict_consistent(answer: str, verdict_true: bool) -> bool:
+        """True if the answer's polarity matches the formal verdict.
+
+        Checks the first word: an affirmation (yes/true/correct/...) must
+        align with a true verdict; a negation (no/false/not/...) with a
+        false one. Mismatch means the LLM overrode the formal result.
+        """
+        first = answer.lstrip().split(None, 1)[0].lower().rstrip(",.;:!?")
+        affirm = {"yes", "true", "correct", "indeed", "right", "exactly",
+                  "absolutely", "certainly"}
+        negate = {"no", "false", "not", "incorrect", "wrong", "nope",
+                  "negative", "cannot", "can't"}
+        if verdict_true and first in negate:
+            return False
+        if not verdict_true and first in affirm:
+            return False
+        return True
 
     # -- fallbacks (delegate to the inherited regex layer) ----------------
 
@@ -351,6 +439,53 @@ class OllamaDiscourse(LLMDiscourse):
         if not re.match(r"^[a-z][a-zA-Z0-9_]*\(", s):
             return None
         return s
+
+    @staticmethod
+    def _kb_atoms(clauses: List[str]) -> Set[str]:
+        """Extract lowercase atom constants from a list of Prolog clauses.
+
+        Atoms are lowercase identifiers appearing inside argument lists
+        (e.g. ``socrates`` in ``man(socrates).``). Variables (uppercase)
+        are excluded. Used to fix mis-capitalized query arguments: if the
+        LLM writes ``mortal(Socrates).`` (a variable in Prolog) but
+        ``socrates`` is a known atom, we lowercase it to ``mortal(socrates).``.
+        """
+        atoms: Set[str] = set()
+        for clause in clauses:
+            # Find all (...) groups and scan their contents.
+            for grp in re.findall(r"\(([^)]*)\)", clause):
+                for tok in re.split(r"[,\s]+", grp):
+                    tok = tok.strip()
+                    if tok and tok[0].islower() and tok.isidentifier():
+                        atoms.add(tok)
+        return atoms
+
+    @classmethod
+    def _normalize_query_args(cls, goal: str, clauses: List[str]) -> str:
+        """Lowercase mis-capitalized query args that match a known KB atom.
+
+        Prolog treats a leading-uppercase token as a variable. When the LLM
+        writes ``mortal(Socrates).`` meaning the atom socrates, this rewrites
+        it to ``mortal(socrates).`` so the query tests the fact rather than
+        binding a fresh variable. Only tokens that case-insensitively match
+        a known atom are changed; genuine variables (X, Y, Z, ...) are left
+        alone because they won't match any atom.
+        """
+        atoms = cls._kb_atoms(clauses)
+        if not atoms:
+            return goal
+        def fix(m):
+            tok = m.group(0)
+            if tok[0].isupper() and tok.lower() in atoms:
+                return tok.lower()
+            return tok
+        # Rewrite capitalized identifiers inside the argument list only,
+        # never the predicate name (which is already lowercase per validation).
+        head, _, args = goal.partition("(")
+        if "(" in goal and args:
+            args = re.sub(r"\b[A-Z][A-Za-z0-9_]*\b", fix, args)
+            return head + "(" + args
+        return goal
 
     # -- reporting ---------------------------------------------------------
 

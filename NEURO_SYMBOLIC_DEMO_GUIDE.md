@@ -545,7 +545,7 @@ self.builtins = {
 The `PrologEngine` class is a thin wrapper around `pyswip.Prolog`. There is no custom unification or backward-chaining code — all reasoning is delegated to SWI-Prolog:
 
 - `add_fact(f)` / `add_rule(r)` → `self._prolog.assertz(...)`, with the predicate indicator tracked for later retraction
-- `query(g)` → `list(self._prolog.query("catch((g), error(existence_error(procedure, _), _), fail)"))`, normalized to string-valued dicts. The `catch/3` wrapper turns a call to an undefined predicate into a graceful failure (`[]`) instead of raising `existence_error`, matching the toy engine and keeping the loop from crashing when the Discourse layer asks about a predicate it never formalized. Other errors still propagate.
+- `query(g)` → `list(self._prolog.query("catch(call_with_inference_limit((g), 10000, _), error(existence_error(procedure, _), _), fail)"))`, normalized to string-valued dicts. The `call_with_inference_limit/3` wrapper caps total inferences at 10000 so mutually recursive LLM-emitted rules (e.g. `cat(X):-animal(X)` + `animal(X):-cat(X)`) cannot hang the loop; the `catch/3` wrapper turns a call to an undefined predicate into a graceful failure (`[]`) instead of raising `existence_error`. Legitimate recursive queries stay well under the limit. Other errors still propagate.
 - `is_assertable(clause)` / `is_static_predicate(name, arity)` → `predicate_property(Head, static)`, used by the Ollama layer to drop LLM-emitted clauses whose head is a static builtin/library predicate (`is/2`, `member/2`, ...) that `assertz` cannot redefine.
 - `clear()` → `retractall` for every tracked predicate indicator
 - `format_solutions` is identical to the zero-dep version
@@ -880,11 +880,17 @@ Every override first checks `OllamaClient.is_available()` (a cached probe of `/a
 
 #### Two engine changes that make the LLM path robust
 
-Wiring a real LLM to real Prolog exposed two latent issues in the shared regex layer and engine, now fixed in `neuro_symbolic_demo_prolog.py` (and the identical regex code in `neuro_symbolic_demo.py`):
+Wiring a real LLM to real Prolog exposed three latent issues in the shared regex layer and engine, now fixed in `neuro_symbolic_demo_prolog.py` (and the identical regex code in `neuro_symbolic_demo.py`):
 
 1. **`is/2` collisions.** The regex `_extract_query` built `is(X, bob)` from "Who is the *grandparent* of Bob?" (it used the captured `is` instead of the relation), and `_general_interpretation`'s verb pattern emitted `is(john, a).` from "John is a parent". Both collide with SWI-Prolog's static `is/2`. Fixed: the family query now uses the relation (`grandparent(X, bob).`), and the verb pattern skips copulas/stopwords (`is`, `are`, `a`, `the`, ...). The toy engine tolerated these because it has no `is/2` builtin; real Prolog does not.
 
 2. **Undefined-predicate queries.** When the Discourse layer asks about a predicate it never formalized (e.g. `grandparent(X, bob)` with only `parent/2` loaded), SWI-Prolog raises `existence_error` where the toy engine returns no solutions. `PrologEngine.query` now wraps each goal in `catch/3` so an undefined predicate fails gracefully (returns `[]`) instead of crashing the loop. Other errors (type errors, syntax errors) still propagate. This is what makes the regex fallback for the family/recursion demos report "no solutions" instead of aborting.
+
+3. **Infinite loops from LLM-generated rules.** An LLM can emit mutually recursive rules with no terminating base case (e.g. `cat(X) :- animal(X).` + `animal(X) :- cat(X).`). Without protection, Prolog backtracks between them forever and the loop hangs. `PrologEngine.query` now wraps each goal in `call_with_inference_limit/3` (limit 10000) so runaway recursion is cut off and the goal simply fails. Legitimate queries — including recursive `ancestor/2` over several generations — stay well under the limit.
+
+#### Verdict consistency: the formal system is authoritative
+
+The `reinterpret` step computes the verdict (true/false) from Prolog's solutions and hands it to the LLM to phrase. But a small model can still contradict the verdict — saying "No" when Prolog proved true. `OllamaDiscourse._verdict_consistent` checks the first word of the LLM's answer against the verdict: if the polarity mismatches (e.g. "No" for a true verdict), the answer is rejected and the deterministic regex reinterpretation is used instead. This is the neuro-symbolic thesis made concrete: the formal constraint catches the LLM's error, and the loop never lets the language model override the formal result.
 
 #### The showcase: recursion the regex layer cannot do
 
