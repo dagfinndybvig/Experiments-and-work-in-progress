@@ -589,10 +589,14 @@ class LLMDiscourse:
         for subj, obj in matches:
             results.append(f"has({subj.lower()}, {obj.lower()}).")
 
-        # Pattern: X Y Z (verb pattern)
+        # Pattern: X Y Z (verb pattern) -- skip copulas/stopwords so we never
+        # emit clauses like is(X, Y) that collide with Prolog builtins.
         matches = re.findall(r'(\w+)\s+(\w+)\s+(\w+)', text)
         for subj, verb, obj in matches:
-            results.append(f"{verb.lower()}({subj.lower()}, {obj.lower()}).")
+            v = verb.lower()
+            if v in ('is', 'are', 'was', 'were', 'a', 'an', 'the', 'has', 'have', 'had'):
+                continue
+            results.append(f"{v}({subj.lower()}, {obj.lower()}).")
         
         return results if results else [f"% Interpreted: {text}"]
     
@@ -728,7 +732,7 @@ class LLMDiscourse:
             # "Who is the parent of Mary?" -> parent(X, mary)
             matches = re.findall(r'(?i)who\s+(is|are)\s+the\s+(\w+)\s+of\s+(\w+)', text)
             if matches:
-                rel, _, obj = matches[0]
+                _, rel, obj = matches[0]
                 return f"{rel}(X, {obj.lower()})."
             
             # "Is John the parent of Mary?" -> parent(john, mary)

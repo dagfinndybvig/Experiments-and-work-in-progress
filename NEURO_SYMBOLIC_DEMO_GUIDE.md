@@ -10,20 +10,23 @@ The demonstration implements the **neuro-symbolic architecture** described in th
 
 ---
 
-## Two Implementations
+## Three Implementations
 
-There are two implementations of the same system, kept directly comparable by sharing class names, public interface, demo scenarios, and the natural-language layer:
+There are three implementations of the same system, kept directly comparable by sharing class names, public interface, and demo scenarios:
 
-| | `neuro_symbolic_demo.py` | `neuro_symbolic_demo_prolog.py` |
-|---|---|---|
-| Reasoning engine | Pure-Python toy Prolog (~400 lines) | Real SWI-Prolog via `pyswip` |
-| Dependencies | None (standard library only) | SWI-Prolog + `pip install pyswip` |
-| Recursion, lists, negation, CLP | No | Yes |
-| Demos 1-5 (syllogism, family, expert, planning, loop) | Yes | Yes (identical results) |
-| Demo 6 (recursive `ancestor`, list `member`) | No | Yes |
-| Best for | Reading the whole engine; running anywhere | Plugging in a real LLM that emits idiomatic Prolog |
+| | `neuro_symbolic_demo.py` | `neuro_symbolic_demo_prolog.py` | `neuro_symbolic_demo_ollama.py` |
+|---|---|---|---|
+| Reasoning engine (Geometry) | Pure-Python toy Prolog (~400 lines) | Real SWI-Prolog via `pyswip` | Real SWI-Prolog via `pyswip` |
+| NL layer (Discourse) | Regex pattern-action (ELIZA-style) | Regex pattern-action (identical) | **Real LLM via Ollama** (regex fallback) |
+| Dependencies | None (standard library only) | SWI-Prolog + `pip install pyswip` | SWI-Prolog + `pyswip` + `requests` + Ollama (optional) |
+| Recursion, lists, negation, CLP | No | Yes | Yes |
+| Demos 1-5 (syllogism, family, expert, planning, loop) | Yes | Yes (identical results) | — |
+| Demo 6 (recursive `ancestor`, list `member`) | No | Yes | — |
+| Ollama demos (NL -> LLM -> Prolog -> NL) | No | No | Yes (4 scenarios) |
+| Runs offline, no API key | Yes | Yes | Yes (LLM is local; fallback needs nothing) |
+| Best for | Reading the whole engine; running anywhere | Plugging in a real LLM that emits idiomatic Prolog | **Running the loop on an actual LLM** |
 
-The zero-dependency version is a readable artifact: the entire backward-chaining engine is ~400 lines you can follow. The Prolog-backed version removes the ceiling of the toy engine (no lists, no real recursion, depth-limited chaining) so the formal-constraint half of the loop can do what the essay actually claims for it. Most of this guide describes the architecture and demos in terms that apply to **both** versions; differences are noted where they matter (Installation, System Components, Technical Implementation Details, and Demo 6).
+The zero-dependency version is a readable artifact: the entire backward-chaining engine is ~400 lines you can follow. The Prolog-backed version removes the ceiling of the toy engine (no lists, no real recursion, depth-limited chaining) so the formal-constraint half of the loop can do what the essay actually claims for it. The Ollama-backed version then replaces the regex Discourse with a real local LLM, so the Interpret/Formalize/Reinterpret steps are done by a model rather than a pattern matcher — while Derive/Verify stay in SWI-Prolog. It degrades gracefully: if Ollama is not running, every step falls back to the inherited regex layer and the output matches the Prolog version. Most of this guide describes the architecture and demos in terms that apply to **all three** versions; differences are noted where they matter (Installation, System Components, Technical Implementation Details, Demo 6, and the Ollama section).
 
 ---
 
@@ -204,11 +207,11 @@ The `PrologEngine` class is a thin wrapper around SWI-Prolog via `pyswip`. It de
 
 ### 2. LLMDiscourse (Discourse Component)
 
-The `LLMDiscourse` class simulates an LLM's role in the neuro-symbolic loop.
+The `LLMDiscourse` class simulates an LLM's role in the neuro-symbolic loop. In the zero-dep and Prolog versions it is a regex-based pattern-action interpreter; in the Ollama version it is subclassed by `OllamaDiscourse`, which replaces the regex `interpret`/`_extract_query`/`reinterpret` with calls to a local LLM (falling back to the regex layer when Ollama is down). See [Replacing the Regex Layer with a Real LLM](#replacing-the-regex-layer-with-a-real-llm) for the full mechanism.
 
 **Features:**
 - **Domain-Specific Knowledge**: Pre-configured patterns for classical logic, family relationships, and planning
-- **Natural Language Interpretation**: Extracts meaning from text using regex patterns
+- **Natural Language Interpretation**: Extracts meaning from text using regex patterns (or, in the Ollama version, asks the LLM)
 - **Formalization**: Converts natural language to Prolog code
 - **Reinterpretation**: Translates formal results back to natural language
 - **Loop Management**: Orchestrates the complete neuro-symbolic cycle
@@ -245,6 +248,20 @@ The top-level class that combines both components and provides the demonstration
 
 `pyswip` locates the SWI-Prolog shared library automatically on Windows and via `swipl` on PATH on Unix. If you get `SwiPrologNotFoundError`, SWI-Prolog is not installed or not on PATH.
 
+**For the Ollama version (`neuro_symbolic_demo_ollama.py`):**
+
+- Everything the SWI-Prolog version needs, **plus**:
+- **requests**: `pip install requests`
+- **Ollama** (only for the LLM path; the regex fallback runs without it):
+  - Windows: `winget install Ollama.Ollama`
+  - macOS: `brew install ollama`
+  - Linux: `curl -fsSL https://ollama.com/install.sh | sh`
+- Then start it and pull a model:
+  - `ollama serve` (if not already running as a service)
+  - `ollama pull qwen2.5:7b` (or any instruct model; set with `--model` or `OLLAMA_MODEL`)
+
+The Ollama version imports `PrologEngine` and `LLMDiscourse` from `neuro_symbolic_demo_prolog`, so it inherits that file's prerequisites. Without Ollama running it still works — every Discourse step falls back to the regex layer, so you get the same output as the Prolog version. Run `python neuro_symbolic_demo_ollama.py --status` to see whether Ollama is reachable and which model is configured.
+
 ### Installation Steps
 
 #### Option 1: Clone the Repository (Recommended)
@@ -257,8 +274,8 @@ cd Experiments-and-work-in-progress
 # Verify you can run Python
 python --version
 
-# (Prolog version only) install the Python binding
-pip install pyswip
+# (Prolog and Ollama versions) install the Python bindings
+pip install pyswip requests
 ```
 
 #### Option 2: Download Just the Demo File
@@ -286,6 +303,8 @@ ns_demo_env\Scripts\activate
 # The zero-dep version has no external dependencies.
 # For the Prolog version:
 pip install pyswip
+# For the Ollama version (adds requests; Ollama itself installed separately):
+pip install pyswip requests
 ```
 
 ### Verifying Installation
@@ -299,6 +318,10 @@ python -c "from neuro_symbolic_demo import NeuroSymbolicSystem; print('Installat
 
 # SWI-Prolog version (requires SWI-Prolog + pyswip)
 python -c "from neuro_symbolic_demo_prolog import NeuroSymbolicSystem; print('Installation successful!')"
+
+# Ollama version (requires SWI-Prolog + pyswip + requests; Ollama optional)
+python -c "from neuro_symbolic_demo_ollama import NeuroSymbolicSystem; print('Installation successful!')"
+python neuro_symbolic_demo_ollama.py --status   # shows Ollama up/down + configured model
 ```
 
 If you see "Installation successful!", the system is ready to use.
@@ -321,6 +344,15 @@ Or with the SWI-Prolog version (requires SWI-Prolog + pyswip):
 python neuro_symbolic_demo_prolog.py
 ```
 
+Or with the Ollama version (requires SWI-Prolog + pyswip + requests; Ollama optional — runs in regex-fallback mode without it):
+
+```bash
+python neuro_symbolic_demo_ollama.py            # run the 4 NL->LLM->Prolog->NL demos
+python neuro_symbolic_demo_ollama.py --status   # show Ollama up/down + configured model
+python neuro_symbolic_demo_ollama.py --model llama3.1:8b --demo
+python neuro_symbolic_demo_ollama.py --interactive
+```
+
 This will execute the demonstrations sequentially:
 1. Classical Logic (Aristotle's Syllogism)
 2. Family Relationships (Platonic Ontology)
@@ -329,11 +361,11 @@ This will execute the demonstrations sequentially:
 5. Complete Neuro-Symbolic Loop
 6. Real Prolog Power (recursion and lists) — **Prolog version only**
 
-Demos 1-5 produce identical results in both versions. Demo 6 runs only in the Prolog-backed version because it exercises unbounded recursion and list membership, which the toy engine cannot do.
+Demos 1-5 produce identical results in the zero-dep and Prolog versions. Demo 6 runs only in the Prolog-backed version because it exercises unbounded recursion and list membership, which the toy engine cannot do. The Ollama version runs its own set of four natural-language scenarios through the real loop (syllogism, family, novel syllogism, and a recursive `ancestor/2` case) — when Ollama is up the LLM does the Interpret/Formalize/Reinterpret steps; when it is down, the regex layer takes over and the syllogism demos still succeed while the family/recursion ones report "no solutions" (the regex layer cannot synthesize the missing rules — which is exactly the limitation the LLM removes).
 
 ### Command-Line Options
 
-Both versions accept the same flags:
+The zero-dep and Prolog versions accept the same flags:
 
 ```bash
 # Run demonstrations
@@ -349,7 +381,13 @@ python neuro_symbolic_demo.py --help
 python neuro_symbolic_demo.py -h
 ```
 
-Substitute `neuro_symbolic_demo_prolog.py` for the SWI-Prolog version.
+Substitute `neuro_symbolic_demo_prolog.py` for the SWI-Prolog version. The Ollama version adds `--model NAME`, `--host URL`, and `--status`, and honors the `OLLAMA_MODEL` / `OLLAMA_HOST` environment variables:
+
+```bash
+python neuro_symbolic_demo_ollama.py --model qwen2.5:7b --host http://localhost:11434 --demo
+python neuro_symbolic_demo_ollama.py --status
+python neuro_symbolic_demo_ollama.py --help
+```
 
 ### Sample Output
 
@@ -507,7 +545,8 @@ self.builtins = {
 The `PrologEngine` class is a thin wrapper around `pyswip.Prolog`. There is no custom unification or backward-chaining code — all reasoning is delegated to SWI-Prolog:
 
 - `add_fact(f)` / `add_rule(r)` → `self._prolog.assertz(...)`, with the predicate indicator tracked for later retraction
-- `query(g)` → `list(self._prolog.query(g))`, normalized to string-valued dicts
+- `query(g)` → `list(self._prolog.query("catch((g), error(existence_error(procedure, _), _), fail)"))`, normalized to string-valued dicts. The `catch/3` wrapper turns a call to an undefined predicate into a graceful failure (`[]`) instead of raising `existence_error`, matching the toy engine and keeping the loop from crashing when the Discourse layer asks about a predicate it never formalized. Other errors still propagate.
+- `is_assertable(clause)` / `is_static_predicate(name, arity)` → `predicate_property(Head, static)`, used by the Ollama layer to drop LLM-emitted clauses whose head is a static builtin/library predicate (`is/2`, `member/2`, ...) that `assertz` cannot redefine.
 - `clear()` → `retractall` for every tracked predicate indicator
 - `format_solutions` is identical to the zero-dep version
 
@@ -814,24 +853,46 @@ Note: the recursive `ancestor/2` rule runs only in the SWI-Prolog version. The t
 
 ### Replacing the Regex Layer with a Real LLM
 
-The `LLMDiscourse` class is a stand-in for a real LLM — a regex-based pattern-action interpreter in the ELIZA tradition. To use an actual LLM (local via Ollama, or a hosted API), subclass `LLMDiscourse` and override `interpret` and `_extract_query` to call a model that returns structured output:
+The `LLMDiscourse` class in the zero-dep and Prolog versions is a stand-in for a real LLM — a regex-based pattern-action interpreter in the ELIZA tradition. `neuro_symbolic_demo_ollama.py` is the real-LLM version: it subclasses the Prolog `LLMDiscourse` and overrides the three natural-language touch points of the loop to call a local model served by **Ollama**.
 
-```python
-class LLMDiscourseReal(LLMDiscourse):
-    def interpret(self, text, domain=None):
-        # Ask the LLM to emit JSON: {"facts": [...], "rules": [...]}
-        response = call_llm(system_prompt, text)
-        spec = parse_json(response)
-        return spec["facts"] + spec["rules"]
+#### What it overrides
 
-    def _extract_query(self, text, domain):
-        # Ask the LLM to emit just the query, e.g. "mortal(socrates)."
-        return call_llm(query_prompt, text).strip()
-```
+`OllamaDiscourse(LLMDiscourse)` overrides exactly the methods that do NL work, and leaves the rest (including `loop`) inherited:
 
-The key is structured output, not free text: ask the LLM for JSON with `facts`, `rules`, and `query` fields, then validate each clause against `PrologEngine.add_fact`/`add_rule` before loading. Parse failures go back to the LLM as a revision prompt — that validation loop *is* the neuro-symbolic thesis made concrete: the LLM provides open-world language, the engine provides formal constraint, and the loop reconciles them when they disagree.
+- `interpret(text, domain)` — asks the LLM to emit JSON `{"facts": [...], "rules": [...]}` (each item a single Prolog clause), validates each clause, and returns the survivors. This is the Interpret + Formalize steps.
+- `_extract_query(text, domain)` — asks the LLM to emit one Prolog query goal (e.g. `mortal(socrates).` or `ancestor(X, charlie).`).
+- `reinterpret(solutions, original_query)` — asks the LLM to render the Prolog solutions as a concise natural-language answer.
 
-The `PrologEngine` half needs no changes. With the SWI-Prolog backend, real Prolog accepts the idiomatic clauses an LLM will naturally produce (recursive rules, lists, DCGs) — which is the whole point of using a real Prolog rather than the toy engine.
+`Derive` and `Verify` stay in SWI-Prolog, unchanged. The inherited `loop` calls these overrides in sequence, loads the returned clauses into the engine, runs the query, and reinterprets — so the LLM is wired in by overriding three methods and nothing else.
+
+#### The contract: structured output, not free text
+
+Each LLM call asks for a constrained output — JSON for `interpret`, a single goal for `_extract_query`, a short answer for `reinterpret` — and Ollama's `format: "json"` mode forces valid JSON for the formalization step. The response is then cleaned and validated before it touches the engine:
+
+- `_clean_clause` strips markdown fences, takes the first non-empty line, ensures a trailing period, requires balanced parentheses, requires a lowercase `name(...)` head, and rejects prose markers (`?`, ```` ``` ````, `json`, `output`, `answer`).
+- `PrologEngine.is_assertable` then asks Prolog itself — via `predicate_property(Head, static)` — whether the clause's head predicate is a static builtin/library predicate (`is/2`, `=/2`, `member/2`, ...) that `assertz` cannot redefine. Such clauses are dropped; the rest are kept. This is why the validation is not a brittle blocklist: Prolog is the source of truth for what it can accept.
+
+Clauses that fail either check are silently dropped. If *no* clause survives, `interpret` falls back to the regex layer for that call.
+
+#### Graceful fallback
+
+Every override first checks `OllamaClient.is_available()` (a cached probe of `/api/tags`). If Ollama is not running — not installed, not started, or the model not pulled — the call delegates to the inherited regex implementation and tags itself `regex` in `discourse.paths`; otherwise it uses the model and tags itself `ollama`. So the file runs today with no LLM installed and produces the same output as the Prolog version; the moment Ollama is up, the same code paths use the model with no edits. Each demo prints `discourse.path_summary()` so you can see which path each step took.
+
+#### Two engine changes that make the LLM path robust
+
+Wiring a real LLM to real Prolog exposed two latent issues in the shared regex layer and engine, now fixed in `neuro_symbolic_demo_prolog.py` (and the identical regex code in `neuro_symbolic_demo.py`):
+
+1. **`is/2` collisions.** The regex `_extract_query` built `is(X, bob)` from "Who is the *grandparent* of Bob?" (it used the captured `is` instead of the relation), and `_general_interpretation`'s verb pattern emitted `is(john, a).` from "John is a parent". Both collide with SWI-Prolog's static `is/2`. Fixed: the family query now uses the relation (`grandparent(X, bob).`), and the verb pattern skips copulas/stopwords (`is`, `are`, `a`, `the`, ...). The toy engine tolerated these because it has no `is/2` builtin; real Prolog does not.
+
+2. **Undefined-predicate queries.** When the Discourse layer asks about a predicate it never formalized (e.g. `grandparent(X, bob)` with only `parent/2` loaded), SWI-Prolog raises `existence_error` where the toy engine returns no solutions. `PrologEngine.query` now wraps each goal in `catch/3` so an undefined predicate fails gracefully (returns `[]`) instead of crashing the loop. Other errors (type errors, syntax errors) still propagate. This is what makes the regex fallback for the family/recursion demos report "no solutions" instead of aborting.
+
+#### The showcase: recursion the regex layer cannot do
+
+The Ollama demo's fourth scenario feeds the model a natural-language description of `ancestor/2` ("an ancestor is a parent, or a parent of an ancestor"). A capable model emits the two recursive rules and the `parent/2` facts; SWI-Prolog runs them and returns all ancestors of Charlie. Neither the regex layer (which cannot synthesize the rule) nor the toy engine (which cannot run the recursion) can do this — it is the concrete payoff of pairing a real LLM with real Prolog.
+
+#### Using a hosted API instead of Ollama
+
+Ollama is a local, offline, no-API-key choice that matches the other two demos' stance. To use a hosted provider (Mistral, OpenAI, Anthropic, ...), replace the body of `OllamaClient.chat` with a call to that provider's chat endpoint. Everything upstream — the prompts, the JSON contract, the validation, the fallback — stays the same; the rest of the system never knows which backend produced the text.
 
 ---
 

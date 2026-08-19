@@ -130,6 +130,33 @@ class PrologEngine:
         if ind:
             self._loaded_preds.add(ind)
 
+    # -- clause validation --------------------------------------------------
+
+    def is_static_predicate(self, name: str, arity: int) -> bool:
+        """
+        True if ``name/arity`` is an existing static predicate -- a builtin
+        (``is/2``, ``=/2``) or a library predicate (``member/2``, ``append/2``)
+        -- that cannot be (re)defined via ``assertz``. Undefined predicates
+        and predicates the user has already asserted (which become dynamic)
+        return False. Used to drop LLM-emitted clauses that would otherwise
+        raise ``permission_error(modify, static_procedure, ...)``.
+        """
+        head = name if arity <= 0 else f"{name}({', '.join(['_'] * arity)})"
+        try:
+            return bool(list(self._prolog.query(
+                f"predicate_property({head}, static)")))
+        except Exception:
+            return False
+
+    def is_assertable(self, clause: str) -> bool:
+        """False if ``clause``'s head predicate is a static builtin/library
+        predicate (so it cannot be asserted); True otherwise."""
+        ind = self._pred_indicator(clause)
+        if not ind:
+            return True
+        name, arity = ind.split("/")
+        return not self.is_static_predicate(name, int(arity))
+
     # -- mutation ----------------------------------------------------------
 
     def add_fact(self, fact: str):
@@ -181,9 +208,19 @@ class PrologEngine:
         A ground query that succeeds returns [{}] (truthy, non-empty);
         a failing query returns [] (falsy). This matches the semantics
         the rest of the code relies on (``len(solutions) > 0``).
+
+        The goal is wrapped in catch/3 so that calling an undefined
+        predicate (one the Discourse layer asked about but never
+        formalized -- e.g. ``grandparent(X, bob)`` when only ``parent/2``
+        facts were loaded) fails gracefully with no solutions instead of
+        raising ``existence_error``. This matches the toy engine's lenient
+        behavior and keeps the neuro-symbolic loop from crashing when the
+        LLM/regex emits a query whose predicate has no clauses. Other
+        errors (type errors, syntax errors, ...) still propagate.
         """
         goal = goal.strip().rstrip('.')
-        solutions = list(self._prolog.query(goal))
+        wrapped = f"catch(({goal}), error(existence_error(procedure, _), _), fail)"
+        solutions = list(self._prolog.query(wrapped))
         # Normalize values to plain strings for display parity with the
         # toy engine. Lists and numbers stringify naturally.
         normalized = []
@@ -385,10 +422,14 @@ class LLMDiscourse:
         for subj, obj in matches:
             results.append(f"has({subj.lower()}, {obj.lower()}).")
 
-        # Pattern: X Y Z (verb pattern)
+        # Pattern: X Y Z (verb pattern) -- skip copulas/stopwords so we never
+        # emit clauses like is(X, Y) that collide with Prolog builtins.
         matches = re.findall(r'(\w+)\s+(\w+)\s+(\w+)', text)
         for subj, verb, obj in matches:
-            results.append(f"{verb.lower()}({subj.lower()}, {obj.lower()}).")
+            v = verb.lower()
+            if v in ('is', 'are', 'was', 'were', 'a', 'an', 'the', 'has', 'have', 'had'):
+                continue
+            results.append(f"{v}({subj.lower()}, {obj.lower()}).")
 
         return results if results else [f"% Interpreted: {text}"]
 
@@ -495,7 +536,7 @@ class LLMDiscourse:
             # "Who is the parent of Mary?" -> parent(X, mary)
             matches = re.findall(r'(?i)who\s+(is|are)\s+the\s+(\w+)\s+of\s+(\w+)', text)
             if matches:
-                rel, _, obj = matches[0]
+                _, rel, obj = matches[0]
                 return f"{rel}(X, {obj.lower()})."
 
             # "Is John the parent of Mary?" -> parent(john, mary)

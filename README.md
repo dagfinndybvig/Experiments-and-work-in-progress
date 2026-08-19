@@ -31,20 +31,22 @@ Alternate versions of the second and third essays are also available: **Symbolic
 
 ## Neuro-Symbolic AI Demonstration
 
-To test the ideas from the Plato-to-Prolog essay, two implementations of the neuro-symbolic architecture are included. Both implement the bidirectional loop between linguistic interpretation (LLM/Discourse) and formal constraint (Prolog/Geometry) described in the essay. They share the same class names, public interface, demo scenarios, and natural-language layer, so they can be compared directly.
+To test the ideas from the Plato-to-Prolog essay, three implementations of the neuro-symbolic architecture are included. All implement the bidirectional loop between linguistic interpretation (LLM/Discourse) and formal constraint (Prolog/Geometry) described in the essay. They share the same class names, public interface, and demo scenarios, so they can be compared directly.
 
-### Two versions
+### Three versions
 
-| | `neuro_symbolic_demo.py` | `neuro_symbolic_demo_prolog.py` |
-|---|---|---|
-| Reasoning engine | Pure-Python toy Prolog (~400 lines) | Real SWI-Prolog via `pyswip` |
-| Dependencies | None | SWI-Prolog + `pip install pyswip` |
-| Recursion, lists, negation, CLP | No | Yes |
-| Demos 1-5 (syllogism, family, expert, planning, loop) | Yes | Yes (identical results) |
-| Demo 6 (recursive `ancestor`, list `member`) | No | Yes |
-| Best for | Reading the whole engine; running anywhere | Plugging in a real LLM that emits idiomatic Prolog |
+| | `neuro_symbolic_demo.py` | `neuro_symbolic_demo_prolog.py` | `neuro_symbolic_demo_ollama.py` |
+|---|---|---|---|
+| Reasoning engine | Pure-Python toy Prolog (~400 lines) | Real SWI-Prolog via `pyswip` | Real SWI-Prolog via `pyswip` |
+| NL layer | Regex (ELIZA-style) | Regex (identical) | **Real LLM via Ollama** (regex fallback) |
+| Dependencies | None | SWI-Prolog + `pip install pyswip` | SWI-Prolog + `pyswip` + `requests` + Ollama (optional) |
+| Recursion, lists, negation, CLP | No | Yes | Yes |
+| Demos 1-5 (syllogism, family, expert, planning, loop) | Yes | Yes (identical) | — |
+| Demo 6 (recursive `ancestor`, list `member`) | No | Yes | — |
+| Ollama demos (NL -> LLM -> Prolog -> NL) | No | No | Yes (4 scenarios) |
+| Best for | Reading the whole engine; running anywhere | Plugging in a real LLM that emits idiomatic Prolog | **Running the loop on an actual LLM** |
 
-The zero-dependency version is a readable artifact: the entire backward-chaining engine is ~400 lines you can follow. The Prolog-backed version removes the ceiling of the toy engine (no lists, no real recursion, depth-limited) so the formal-constraint half of the loop can do what the essay actually claims for it.
+The zero-dependency version is a readable artifact: the entire backward-chaining engine is ~400 lines you can follow. The Prolog-backed version removes the ceiling of the toy engine (no lists, no real recursion, depth-limited) so the formal-constraint half of the loop can do what the essay actually claims for it. The Ollama-backed version then replaces the regex Discourse with a real local LLM — and degrades gracefully to the regex layer when Ollama is not running, so it works with no LLM installed.
 
 ### Running the zero-dependency version
 
@@ -64,16 +66,31 @@ python neuro_symbolic_demo_prolog.py
 python neuro_symbolic_demo_prolog.py --interactive
 ```
 
+### Running the Ollama version
+
+Prerequisites: the SWI-Prolog version's prerequisites, plus `pip install requests`, plus Ollama (optional — without it the demo runs in regex-fallback mode):
+1. **Ollama** — Windows: `winget install Ollama.Ollama`; macOS: `brew install ollama`; Linux: `curl -fsSL https://ollama.com/install.sh | sh`
+2. Start it and pull a model: `ollama serve` then `ollama pull qwen2.5:7b`
+
+```bash
+python neuro_symbolic_demo_ollama.py            # run the 4 NL->LLM->Prolog->NL demos
+python neuro_symbolic_demo_ollama.py --status   # show Ollama up/down + configured model
+python neuro_symbolic_demo_ollama.py --model llama3.1:8b --demo
+python neuro_symbolic_demo_ollama.py --interactive
+```
+
+The `OLLAMA_MODEL` and `OLLAMA_HOST` environment variables are also honored. See `NEURO_SYMBOLIC_DEMO_GUIDE.md` for the full mechanism (structured-output contract, clause validation, graceful fallback).
+
 ### What the demonstrations show
 
-Both versions demonstrate:
+The zero-dep and Prolog versions demonstrate:
 - Classical logic (Aristotle's syllogisms)
 - Family relationship reasoning (ontology)
 - Expert systems (MYCIN-like medical diagnosis)
 - Planning with constraints
 - The complete neuro-symbolic loop
 
-The Prolog-backed version adds a sixth demo showing unbounded recursion (`ancestor/2`) and list membership (`member/2`) — programs the toy engine cannot run at all.
+The Prolog-backed version adds a sixth demo showing unbounded recursion (`ancestor/2`) and list membership (`member/2`) — programs the toy engine cannot run at all. The Ollama version runs four natural-language scenarios through the real loop with the LLM doing the Interpret/Formalize/Reinterpret steps — including a recursive `ancestor/2` case that neither the regex layer nor the toy engine can handle.
 
 The natural-language layer in both is a regex-based pattern-action interpreter (in the ELIZA tradition): a stand-in for a real LLM. To use an actual LLM, subclass `LLMDiscourse` and override `interpret` and `_extract_query` to call a model that returns structured `{facts, rules, query}` output. The `PrologEngine` half needs no changes — real Prolog accepts the idiomatic clauses an LLM will naturally produce.
 
