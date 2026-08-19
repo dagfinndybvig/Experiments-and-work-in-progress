@@ -5,9 +5,11 @@ I think, therefore I am...
 
 In the beginning I was mostly using gen AI for code generation, but in the end that became almost trivial because the agents could clearly build anything I wanted.
 
-Now I am experimenting more with text generation. Mostly as a way of creating a record of things that I am thinking about. This repo stil contains some code though!
+Now I am experimenting more with text generation. Mostly as a way of creating a record of things that I am thinking about. This repo stil contains some code though! (More and more actually, as the ideas develop...)
 
-These days I am not focusing on writing for publication - it is more about looking for insights that I can actually use.
+Note that these days I am not focusing on writing for publication - it is more about looking for insights that I can actually use. For what exactlY? Making Gen AI more trustworthy ansd accountable, which is something I care deepy about both personally and as AI Teamleader at the NTNU University Library.
+
+Broadly speaking this repo tends towards what is called the Neuro Symbolic tradition, combining Symbolic AI and LLMs.
 
 ## The Trilogy: Intelligence, Symbol, and Form
 
