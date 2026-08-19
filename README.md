@@ -9,7 +9,7 @@ Now I am experimenting more with text generation. Mostly as a way of creating a 
 
 Note that these days I am not focusing on writing for publication - it is more about looking for insights that I can actually use. For what exactly? Making Gen AI more trustworthy and accountable, which is something I care deeply about both personally and as AI Teamleader at the NTNU University Library.
 
-> **Workplace Application Example**: The neuro-symbolic architecture isn't just theoretical — it has direct practical applications. See [LIBRARY_SORTING_PLAN.md](LIBRARY_SORTING_PLAN.md) for a concrete plan showing how these same principles could automate and harden library material sorting at NTNU, combining natural language instructions from staff with formal classification and constraint rules.
+> **Workplace Application Example**: The neuro-symbolic architecture isn't just theoretical — it has direct practical applications. See [LIBRARY_SORTING_PLAN.md](LIBRARY_SORTING_PLAN.md) for a concrete plan showing how these same principles could automate and harden library material sorting, combining natural language instructions from staff with formal classification and constraint rules.
 
 Broadly speaking this repo tends towards what is called the Neuro-Symbolic tradition, combining Symbolic AI and LLMs.
 
