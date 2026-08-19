@@ -352,7 +352,7 @@ else:
 
 ## Workplace Integration
 
-### For NTNU University Library
+
 
 This system could be integrated into daily operations:
 
