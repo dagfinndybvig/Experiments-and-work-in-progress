@@ -31,24 +31,51 @@ Alternate versions of the second and third essays are also available: **Symbolic
 
 ## Neuro-Symbolic AI Demonstration
 
-To test the ideas from the Plato-to-Prolog essay, a **neuro-symbolic AI demonstration system** ([Python](neuro_symbolic_demo.py)) is included. This implements the architecture described in the essay — the bidirectional loop between linguistic interpretation (LLM/Discourse) and formal constraint (Prolog/Geometry).
+To test the ideas from the Plato-to-Prolog essay, two implementations of the neuro-symbolic architecture are included. Both implement the bidirectional loop between linguistic interpretation (LLM/Discourse) and formal constraint (Prolog/Geometry) described in the essay. They share the same class names, public interface, demo scenarios, and natural-language layer, so they can be compared directly.
 
-Run the demonstration with:
+### Two versions
+
+| | `neuro_symbolic_demo.py` | `neuro_symbolic_demo_prolog.py` |
+|---|---|---|
+| Reasoning engine | Pure-Python toy Prolog (~400 lines) | Real SWI-Prolog via `pyswip` |
+| Dependencies | None | SWI-Prolog + `pip install pyswip` |
+| Recursion, lists, negation, CLP | No | Yes |
+| Demos 1-5 (syllogism, family, expert, planning, loop) | Yes | Yes (identical results) |
+| Demo 6 (recursive `ancestor`, list `member`) | No | Yes |
+| Best for | Reading the whole engine; running anywhere | Plugging in a real LLM that emits idiomatic Prolog |
+
+The zero-dependency version is a readable artifact: the entire backward-chaining engine is ~400 lines you can follow. The Prolog-backed version removes the ceiling of the toy engine (no lists, no real recursion, depth-limited) so the formal-constraint half of the loop can do what the essay actually claims for it.
+
+### Running the zero-dependency version
+
 ```bash
 python neuro_symbolic_demo.py
-```
-
-Or for interactive mode:
-```bash
 python neuro_symbolic_demo.py --interactive
 ```
 
-The system demonstrates:
+### Running the SWI-Prolog version
+
+Prerequisites:
+1. **SWI-Prolog** — Windows: `winget install SWI-Prolog.SWI-Prolog`; macOS: `brew install swi-prolog`; Ubuntu: `sudo apt install swi-prolog`
+2. **pyswip** — `pip install pyswip`
+
+```bash
+python neuro_symbolic_demo_prolog.py
+python neuro_symbolic_demo_prolog.py --interactive
+```
+
+### What the demonstrations show
+
+Both versions demonstrate:
 - Classical logic (Aristotle's syllogisms)
 - Family relationship reasoning (ontology)
 - Expert systems (MYCIN-like medical diagnosis)
 - Planning with constraints
 - The complete neuro-symbolic loop
+
+The Prolog-backed version adds a sixth demo showing unbounded recursion (`ancestor/2`) and list membership (`member/2`) — programs the toy engine cannot run at all.
+
+The natural-language layer in both is a regex-based pattern-action interpreter (in the ELIZA tradition): a stand-in for a real LLM. To use an actual LLM, subclass `LLMDiscourse` and override `interpret` and `_extract_query` to call a model that returns structured `{facts, rules, query}` output. The `PrologEngine` half needs no changes — real Prolog accepts the idiomatic clauses an LLM will naturally produce.
 
 It shows concretely how Prolog provides the formal reasoning structure that LLMs lack, while LLMs provide the natural language interface that Prolog lacks — together realizing the 2,500-year-old vision of intelligence as structured representation plus structured reasoning.
 
