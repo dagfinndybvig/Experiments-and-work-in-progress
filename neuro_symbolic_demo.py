@@ -106,15 +106,15 @@ class PrologEngine:
                 self.rules.append((head, body_atoms))
     
     def _parse_body(self, body_str: str) -> List[str]:
-        """Parse a rule body into individual atoms, handling commas inside parentheses"""
+        """Parse a rule body into individual atoms, handling commas inside parentheses or lists"""
         atoms = []
         current = []
         depth = 0
         for char in body_str:
-            if char == '(':
+            if char in '([':
                 depth += 1
                 current.append(char)
-            elif char == ')':
+            elif char in ')]':
                 depth -= 1
                 current.append(char)
             elif char == ',' and depth == 0:
@@ -388,20 +388,37 @@ class PrologEngine:
     def query_all(self, goal: str) -> List[Dict[str, str]]:
         """Find all solutions to a query"""
         return self.query(goal)
-    
-    def format_solutions(self, solutions: List[Dict[str, str]]) -> str:
-        """Format query solutions in a readable way"""
+
+    def _extract_query_vars(self, query: str) -> Set[str]:
+        """Extract variable names from a query string"""
+        vars_found = set()
+        for match in re.finditer(r'\b[A-Z][A-Za-z0-9_]*\b', query):
+            vars_found.add(match.group())
+        return vars_found
+
+    def format_solutions(self, solutions: List[Dict[str, str]], query: str = None) -> str:
+        """Format query solutions in a readable way, showing only query variables"""
         if not solutions:
             return "false."
-        
+
+        query_vars = self._extract_query_vars(query) if query else None
+
         results = []
         for sol in solutions:
             if sol:
-                bindings = ", ".join(f"{k} = {v}" for k, v in sorted(sol.items()))
-                results.append(f"{{{bindings}}}")
+                if query_vars is not None:
+                    filtered = {k: v for k, v in sol.items() if k in query_vars}
+                    if filtered:
+                        bindings = ", ".join(f"{k} = {v}" for k, v in sorted(filtered.items()))
+                        results.append(f"{{{bindings}}}")
+                    else:
+                        results.append("true")
+                else:
+                    bindings = ", ".join(f"{k} = {v}" for k, v in sorted(sol.items()))
+                    results.append(f"{{{bindings}}}")
             else:
                 results.append("true")
-        
+
         return " ;\n".join(results) + "."
 
 
@@ -815,7 +832,7 @@ mortal(X) :- man(X).
         # Query
         print("Query: mortal(socrates).")
         solutions = self.geometry.query("mortal(socrates)")
-        print(f"Result: {self.geometry.format_solutions(solutions)}")
+        print(f"Result: {self.geometry.format_solutions(solutions, 'mortal(socrates)')}")
         print()
         
         print("Reinterpretation (Discourse):")
@@ -825,7 +842,7 @@ mortal(X) :- man(X).
         # Show the power: ask a general question
         print("Query: mortal(X).")
         solutions = self.geometry.query("mortal(X)")
-        print(f"Result: {self.geometry.format_solutions(solutions)}")
+        print(f"Result: {self.geometry.format_solutions(solutions, 'mortal(X)')}")
         print()
         print("Reinterpretation: All known men (Socrates, Plato, Aristotle) are mortal.")
     
@@ -873,7 +890,7 @@ grandparent(X, Z) :- parent(X, Y), parent(Y, Z).
         
         print("Query: grandparent(X, bob).")
         solutions = self.geometry.query("grandparent(X, bob)")
-        print(f"Result: {self.geometry.format_solutions(solutions)}")
+        print(f"Result: {self.geometry.format_solutions(solutions, 'grandparent(X, bob)')}")
         print()
         print("Reinterpretation (Discourse):")
         print("  John and Susan are the grandparents of Bob.")
@@ -881,7 +898,7 @@ grandparent(X, Z) :- parent(X, Y), parent(Y, Z).
         
         print("Query: father(X, mary).")
         solutions = self.geometry.query("father(X, mary)")
-        print(f"Result: {self.geometry.format_solutions(solutions)}")
+        print(f"Result: {self.geometry.format_solutions(solutions, 'father(X, mary)')}")
         print()
         print("Reinterpretation: John is the father of Mary.")
     
@@ -927,85 +944,83 @@ mild(measles).
         
         print("Query: diagnosis(Disease, patient1).")
         solutions = self.geometry.query("diagnosis(Disease, patient1)")
-        print(f"Result: {self.geometry.format_solutions(solutions)}")
+        print(f"Result: {self.geometry.format_solutions(solutions, 'diagnosis(Disease, patient1)')}")
         print()
         print("Reinterpretation (Discourse):")
         for sol in solutions:
             disease = sol.get('Disease', 'unknown')
             print(f"  Possible diagnosis: {disease.capitalize()}")
         print()
-        
+
         # Show severity
         print("Query: diagnosis(D, patient1), severe(D).")
         solutions = self.geometry.query("diagnosis(D, patient1), severe(D)")
-        print(f"Result: {self.geometry.format_solutions(solutions)}")
+        print(f"Result: {self.geometry.format_solutions(solutions, 'diagnosis(D, patient1), severe(D)')}")
         print()
         print("Reinterpretation: Flu is a severe diagnosis for patient1.")
     
     def demo_planning(self):
         """Demonstrate constraint-based planning"""
-        print("\nScenario: Task scheduling with constraints")
+        print("\nScenario: Task scheduling with prerequisites")
         print('  Natural language: "We need to build a house.')
-        print('                     The foundation must be built before the walls.')
-        print('                     The roof must be built after the walls.')
-        print('                     What is a valid order?"')
+        print('                     Foundation must come before walls.')
+        print('                     Walls must come before roof.')
+        print('                     Roof must come before painting.')
+        print('                     What tasks must come before painting?"')
         print()
-        
+
         # Clear the knowledge base
         self.geometry.facts.clear()
         self.geometry.rules.clear()
-        
+
         # Load planning knowledge
         program = """
-% Task planning with constraints
-
+% Task planning with prerequisites
 task(foundation).
 task(walls).
 task(roof).
-task(plumbing).
-task(electrical).
+task(painting).
 
-% Constraints (X must come before Y)
 before(foundation, walls).
 before(walls, roof).
-before(foundation, plumbing).
-before(foundation, electrical).
+before(roof, painting).
 
-% Valid sequence: all tasks in order with constraints satisfied
-valid_sequence([H|T]) :-
-    task(H),
-    valid_sequence(T),
-    all_before(H, T).
+% Direct prerequisite
+direct_prereq(A, B) :- before(A, B).
 
-valid_sequence([H]) :-
-    task(H).
+% Two-step prerequisite
+two_step_prereq(A, C) :- before(A, B), before(B, C).
 
-all_before(X, [H|T]) :-
-    (before(X, H) ; X == H),
-    all_before(X, T).
-
-all_before(_, []).
+% Three-step prerequisite
+three_step_prereq(A, D) :- before(A, B), before(B, C), before(C, D).
         """
         self.geometry.load_program(program)
-        
+
         print("Formal representation (Geometry):")
-        print("  task(foundation). task(walls). task(roof).")
-        print("  before(foundation, walls).")
-        print("  before(walls, roof).")
-        print("  valid_sequence([H|T]) :- task(H), valid_sequence(T), all_before(H, T).")
+        print("  task(foundation). task(walls). task(roof). task(painting).")
+        print("  before(foundation, walls). before(walls, roof). before(roof, painting).")
+        print("  direct_prereq(A, B) :- before(A, B).")
+        print("  two_step_prereq(A, C) :- before(A, B), before(B, C).")
         print()
-        
-        print("Query: valid_sequence(Order).")
-        solutions = self.geometry.query("valid_sequence(Order)")
-        print(f"Result (first 3 solutions):")
-        for i, sol in enumerate(solutions[:3]):
-            order = sol.get('Order', '[]')
-            print(f"  {i+1}. {order}")
+
+        print("Query: direct_prereq(X, painting).")
+        solutions = self.geometry.query("direct_prereq(X, painting)")
+        print(f"Result: {self.geometry.format_solutions(solutions, 'direct_prereq(X, painting)')}")
         print()
+
+        print("Query: two_step_prereq(X, painting).")
+        solutions = self.geometry.query("two_step_prereq(X, painting)")
+        print(f"Result: {self.geometry.format_solutions(solutions, 'two_step_prereq(X, painting)')}")
+        print()
+
+        print("Query: three_step_prereq(X, painting).")
+        solutions = self.geometry.query("three_step_prereq(X, painting)")
+        print(f"Result: {self.geometry.format_solutions(solutions, 'three_step_prereq(X, painting)')}")
+        print()
+
         print("Reinterpretation (Discourse):")
-        print("  Valid orders include: [foundation, walls, roof],")
-        print("  [foundation, plumbing, walls, roof], etc.")
-        print("  (All sequences where foundation comes first, then walls, then roof)")
+        print("  To paint, you must first complete: roof (direct),")
+        print("  walls (2-step), and foundation (3-step).")
     
     def demo_complete_loop(self):
         """Demonstrate the complete neuro-symbolic loop"""
@@ -1046,7 +1061,7 @@ all_before(_, []).
         query = "grandfather(X, bob)"
         print(f"  Query: {query}")
         solutions = self.geometry.query(query)
-        print(f"  Formal result: {self.geometry.format_solutions(solutions)}")
+        print(f"  Formal result: {self.geometry.format_solutions(solutions, query)}")
         print()
         
         # Step 4: Verify
