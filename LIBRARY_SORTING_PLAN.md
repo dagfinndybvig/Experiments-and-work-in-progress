@@ -339,7 +339,7 @@ else:
 | Traditional rules engine | Low | High | Medium | Low |
 | **Neuro-symbolic** | **High** | **High** | **High** | **Low** |
 
-### Specific Benefits for NTNU Library
+### Specific Benefits for the Library
 
 1. **Staff Empowerment**: Library staff can use natural language instructions without learning Prolog syntax
 2. **Precision**: Guaranteed correct placement according to all constraints
