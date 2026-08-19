@@ -392,7 +392,7 @@ class LLMDiscourse:
                         prolog_text = handler(match)
                         if prolog_text:
                             results.append(prolog_text)
-                    except:
+                    except Exception:
                         pass
 
         # General fallbacks

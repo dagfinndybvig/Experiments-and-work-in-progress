@@ -82,9 +82,9 @@ class PrologEngine:
             elif len(parts) == 1:
                 return float(parts[0]) == float(value)
             return False
-        except:
+        except Exception:
             return False
-    
+
     def add_fact(self, fact: str):
         """Add a fact to the knowledge base"""
         fact = fact.strip()
@@ -547,7 +547,7 @@ class LLMDiscourse:
                         prolog_text = handler(match)
                         if prolog_text:
                             results.append(prolog_text)
-                    except:
+                    except Exception:
                         pass
         
         # General fallbacks
