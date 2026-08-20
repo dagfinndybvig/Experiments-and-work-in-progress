@@ -14,7 +14,9 @@ Note that these days I am not focusing on writing for publication - it is more a
 Broadly speaking this repo tends towards what is called the Neuro-Symbolic tradition, combining Symbolic AI and LLMs.
 
 The philosophical foundations range far and wide, reflecting my background in that subject. And in mathematics for that matter.
+But the spirit of Descartes is everywhere.
 
+Note: Before I became AI Teamleader I was Innovation Manager for the Humanities Faculty. So in a way this repo is about AI and Innovation, as opposed to AI and pure academic research.
 ## The Trilogy: Intelligence, Symbol, and Form
 
 This repo hosts a trilogy of essays exploring how symbolic forms shape what intelligence can do:
