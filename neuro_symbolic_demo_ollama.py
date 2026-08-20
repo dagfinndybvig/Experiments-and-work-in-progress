@@ -432,8 +432,12 @@ class OllamaDiscourse(LLMDiscourse):
         if s.count("(") != s.count(")"):
             return None
         # Reject prose / formatting leakage that has no place in a clause.
+        # Note: "json", "output", "answer" were previously blacklisted as
+        # substrings, but that rejected legitimate predicates like output(X)
+        # or answer(Q). The regex check below already ensures the clause
+        # starts with a valid predicate name, so prefix leakage is caught.
         low = s.lower()
-        if any(bad in low for bad in ("?", "```", "json", "output", "answer")):
+        if any(bad in low for bad in ("?", "```")):
             return None
         # Must look like name(...) or name(...) :- body.
         if not re.match(r"^[a-z][a-zA-Z0-9_]*\(", s):

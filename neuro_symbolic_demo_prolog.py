@@ -217,7 +217,10 @@ class PrologEngine:
            ``cat(X) :- animal(X).`` + ``animal(X) :- cat(X).``). Legitimate
            queries (including recursive ``ancestor/2`` over a few
            generations) stay well under the limit; runaway recursion is
-           cut off and the goal simply fails.
+           cut off and the goal simply fails. The result variable R is
+           checked against ``inference_limit_exceeded`` (SWI 10.x) and
+           ``resource_error`` (older docs) so that a limit-exceeded call
+           is treated as failure, not success.
 
         2. ``catch/3`` turns a call to an undefined predicate (one the
            Discourse layer asked about but never formalized) into a
@@ -228,15 +231,17 @@ class PrologEngine:
         """
         goal = goal.strip().rstrip('.')
         wrapped = (
-            f"catch(call_with_inference_limit(({goal}), 10000, _), "
+            f"catch((call_with_inference_limit(({goal}), 10000, R), "
+            f"R \\== inference_limit_exceeded, R \\== resource_error), "
             f"error(existence_error(procedure, _), _), fail)"
         )
         solutions = list(self._prolog.query(wrapped))
         # Normalize values to plain strings for display parity with the
-        # toy engine. Lists and numbers stringify naturally.
+        # toy engine. Lists and numbers stringify naturally. Filter out
+        # the R variable used internally by call_with_inference_limit.
         normalized = []
         for sol in solutions:
-            norm = {k: self._stringify(v) for k, v in sol.items()}
+            norm = {k: self._stringify(v) for k, v in sol.items() if k != 'R'}
             normalized.append(norm)
         return normalized
 
@@ -477,7 +482,13 @@ class LLMDiscourse:
 
     def loop(self, natural_language_query: str, domain: str = None,
              max_iterations: int = 3) -> Dict:
-        """Execute the complete neuro-symbolic loop."""
+        """Execute the complete neuro-symbolic loop.
+
+        Note: the current implementation completes a single pass (one
+        iteration). The Revise step is a placeholder for future work;
+        max_iterations is accepted for interface compatibility but the
+        loop always breaks after the first iteration.
+        """
         trace = {
             'natural_query': natural_language_query,
             'domain': domain or self._infer_domain(natural_language_query),
@@ -988,7 +999,12 @@ member(X, [_|T]) :- member(X, T).
 # ============================================================================
 
 def interactive_mode():
-    """Run in interactive mode"""
+    """Run in interactive mode.
+
+    Security note: unrecognized input is tried as a raw Prolog goal.
+    SWI-Prolog can execute system commands via predicates like shell/1,
+    so this REPL is intended for local, trusted use only.
+    """
     system = NeuroSymbolicSystem()
 
     print("Interactive Neuro-Symbolic System (SWI-Prolog backend)")

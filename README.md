@@ -39,7 +39,7 @@ Alternate versions of the second and third essays are also available: **Symbolic
 
 ## Neuro-Symbolic AI Demonstration
 
-To test the ideas from the Plato-to-Prolog essay, three implementations of the neuro-symbolic architecture are included. All implement the bidirectional loop between linguistic interpretation (LLM/Discourse) and formal constraint (Prolog/Geometry) described in the essay. They share the same class names, public interface, and demo scenarios, so they can be compared directly.
+To test the ideas from the Plato-to-Prolog essay, three implementations of the neuro-symbolic architecture are included. All implement the bidirectional loop between linguistic interpretation (LLM/Discourse) and formal constraint (Prolog/Geometry) described in the essay. They share the same core loop interface (`loop`, `interpret`, `_extract_query`, `reinterpret`) and trace-dict structure, so the three can be compared directly. The `PrologEngine` and `NeuroSymbolicSystem` classes differ in some details (the toy engine exposes `facts`/`rules` as a real set/list; the Prolog backend adds `clear()`, `is_assertable`, and inference-limit wrapping), reflecting the different capabilities of each backend.
 
 ### Three versions
 

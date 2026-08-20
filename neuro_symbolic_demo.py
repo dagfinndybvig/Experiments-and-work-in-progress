@@ -22,7 +22,7 @@ Example domains:
 """
 
 import re
-from collections import defaultdict
+import sys
 from typing import List, Dict, Tuple, Optional, Set
 
 
@@ -42,6 +42,13 @@ class PrologEngine:
     - Rules: logical implications (e.g., ancestor(X, Y) :- parent(X, Y))
     - Queries: questions to the knowledge base (e.g., ancestor(X, mary)?)
     - Backward chaining: goal-directed reasoning
+    
+    Limitations (by design -- the SWI-Prolog backend removes these):
+    - No variable renaming: recursive rules suffer variable capture, so
+      unbounded recursion (e.g., ancestor/2 over multiple generations)
+      does not work. Use neuro_symbolic_demo_prolog.py for that.
+    - Depth-limited backward chaining (max_depth=50).
+    - No lists, negation, or constraint solving.
     """
     
     def __init__(self):
@@ -347,8 +354,17 @@ class PrologEngine:
                         break
                 
                 results.extend(sub_results)
-        
-        return results
+
+        # Deduplicate: a goal can match both a fact and a rule, producing
+        # identical binding dicts. Keep the first occurrence (preserves order).
+        seen = set()
+        deduped = []
+        for sol in results:
+            key = tuple(sorted(sol.items()))
+            if key not in seen:
+                seen.add(key)
+                deduped.append(sol)
+        return deduped
     
     def _resolve(self, term: str, bindings: Dict[str, str]) -> str:
         """Resolve variables in a term using current bindings"""
@@ -659,6 +675,11 @@ class LLMDiscourse:
         Interpret -> Formalize -> Derive -> Verify -> Reinterpret -> Revise
         
         Returns a dictionary with all intermediate results.
+
+        Note: the current implementation completes a single pass (one
+        iteration). The Revise step is a placeholder for future work;
+        max_iterations is accepted for interface compatibility but the
+        loop always breaks after the first iteration.
         """
         trace = {
             'natural_query': natural_language_query,
@@ -764,8 +785,6 @@ class LLMDiscourse:
         # Default: try to find a predicate pattern
         words = text.split()
         if words:
-            # Last word before ? might be what we're querying
-            clean = re.sub(r'[?\.]', '', text).strip()
             # Simple heuristic: make first word lowercase, add (X) if it looks like a property
             first_word = words[0].lower()
             if first_word in ['who', 'what', 'which', 'is', 'are']:
@@ -1234,8 +1253,6 @@ def interactive_mode():
 # ============================================================================
 
 if __name__ == "__main__":
-    import sys
-    
     # Check if there are command-line arguments
     if len(sys.argv) > 1:
         if sys.argv[1] in ['--demo', '-d']:
