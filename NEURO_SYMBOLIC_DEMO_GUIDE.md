@@ -588,6 +588,35 @@ The system uses **regex-based pattern matching** to interpret natural language:
 3. **Fallback**: Uses general patterns if no domain-specific ones match
 4. **Query Extraction**: Converts natural language questions into Prolog queries
 
+#### Regex NL Layer: Coverage and Limits
+
+The regex-based `LLMDiscourse` is a deliberate stand-in for a real LLM — an ELIZA-style pattern-action interpreter that keeps the zero-dependency and Prolog demos runnable offline with no API key. It works well for the hard-coded demo scenarios, but its coverage is strictly bounded.
+
+**What it handles**
+
+| Domain | Patterns | Example input |
+|---|---|---|
+| Classical logic | Universal quantification (`All X are Y`), instance attribution (`Socrates is a man`), yes/no questions | `All men are mortal. Socrates is a man. Is Socrates mortal?` |
+| Family | Parent, grandparent, sibling relations; who/is questions | `John is the father of Mary. Who is the grandparent of Bob?` |
+| Expert system | Symptom listing, diagnosis query | `The patient has fever and cough. What is the diagnosis?` |
+| Planning | Before/after constraints, prerequisite queries | `Foundation must come before walls. What tasks come before painting?` |
+
+**What it cannot do**
+
+1. **Synthesize new rules.** The regex layer can only emit facts and rules that match its hard-coded patterns. It cannot invent a recursive `ancestor/2` rule from the description "an ancestor is a parent, or a parent of an ancestor." That requires a real LLM.
+2. **Handle novel phrasings.** Sentences that deviate from the expected word order or vocabulary fall through to the generic fallback, which often produces nonsensical Prolog.
+3. **Multi-sentence coherence across domains.** Each sentence is interpreted independently; there is no cross-sentence context beyond what accumulates in the Prolog database.
+4. **Ambiguity resolution.** The regex layer has no world model to resolve ambiguity — it simply applies the first matching pattern.
+
+**Why this matters for the architecture**
+
+The regex layer's limitations are not a bug; they are a pedagogical feature. They make concrete exactly what the essays argue: natural language understanding requires genuine semantic interpretation, not just pattern matching, and the neuro-symbolic loop only works when the Discourse component can actually formalize novel concepts. The Ollama demo exists to show the same loop with that limitation removed.
+
+**Going beyond the regex layer**
+
+- **Local LLM (Ollama)**: `neuro_symbolic_demo_ollama.py` replaces the regex Discourse with a real local model. See the "Replacing the Regex Layer with a Real LLM" section below.
+- **Hosted API**: Replace the body of `OllamaClient.chat` with a call to any OpenAI-compatible endpoint (Mistral, OpenAI, Anthropic, ...). The prompts, JSON contract, validation, and fallback logic stay the same.
+
 ---
 
 ## Demonstration Walkthroughs
