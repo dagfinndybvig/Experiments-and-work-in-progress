@@ -484,10 +484,10 @@ class LLMDiscourse:
              max_iterations: int = 3) -> Dict:
         """Execute the complete neuro-symbolic loop.
 
-        Note: the current implementation completes a single pass (one
-        iteration). The Revise step is a placeholder for future work;
-        max_iterations is accepted for interface compatibility but the
-        loop always breaks after the first iteration.
+        The loop iterates up to max_iterations times. On the first iteration,
+        domain-specific interpretation is used. On subsequent iterations,
+        broader interpretation strategies are applied to enrich the knowledge
+        base. The loop stops early if no new facts are discovered.
         """
         trace = {
             'natural_query': natural_language_query,
@@ -503,6 +503,10 @@ class LLMDiscourse:
         # Start from a clean knowledge base so the loop is self-contained
         self.prolog.clear()
 
+        # Track clauses added so far (PrologEngine.facts/rules are _ClearProxy)
+        seen_facts: set = set()
+        seen_rules: set = set()
+
         for iteration in range(max_iterations):
             iteration_trace = {
                 'iteration': iteration + 1,
@@ -512,41 +516,63 @@ class LLMDiscourse:
             # Step 1: Interpret (LLM)
             if iteration == 0:
                 interpretations = self.interpret(natural_language_query, trace['domain'])
-                trace['interpretations'] = interpretations
-                iteration_trace['interpretations'] = interpretations
+            else:
+                # On revision iterations, try broader interpretation
+                interpretations = self._general_interpretation(natural_language_query)
 
-                # Step 2: Formalize (LLM) - load into Prolog
-                # Accumulate facts and rules rather than reloading (which clears)
-                for prog in interpretations:
-                    if ':-' in prog:
+            # Step 2: Formalize (LLM) - load into Prolog, skipping duplicates
+            new_facts_added = False
+            for prog in interpretations:
+                prog_norm = prog.rstrip('.').strip()
+                if not prog_norm:
+                    continue
+                if ':-' in prog:
+                    if prog_norm not in seen_rules:
                         self.prolog.add_rule(prog)
-                    else:
+                        seen_rules.add(prog_norm)
+                        new_facts_added = True
+                else:
+                    if prog_norm not in seen_facts:
                         self.prolog.add_fact(prog)
+                        seen_facts.add(prog_norm)
+                        new_facts_added = True
 
-                # For demo, we'll use a hardcoded query or extract one
+            # Extract query on first iteration, reuse thereafter
+            if iteration == 0:
                 formal_query = self._extract_query(natural_language_query, trace['domain'])
                 trace['formal_query'] = formal_query
-                iteration_trace['formal_query'] = formal_query
+            else:
+                formal_query = trace['formal_query']
 
-                # Step 3: Derive (Prolog/Geometry)
-                formal_query_for_engine, solutions = self.derive(formal_query)
-                trace['solutions'] = solutions
-                iteration_trace['solutions'] = solutions
+            iteration_trace['formal_query'] = formal_query
+            iteration_trace['interpretations'] = interpretations
 
-                # Step 4: Verify (Prolog)
-                verification = self.verify(formal_query)
-                trace['verification'] = verification
-                iteration_trace['verification'] = verification
+            # Step 3: Derive (Prolog/Geometry)
+            formal_query_for_engine, solutions = self.derive(formal_query)
+            iteration_trace['solutions'] = solutions
 
-                # Step 5: Reinterpret (LLM)
-                reinterpretation = self.reinterpret(solutions, formal_query)
-                trace['reinterpretation'] = reinterpretation
-                iteration_trace['reinterpretation'] = reinterpretation
+            # Step 4: Verify (Prolog)
+            verification = self.verify(formal_query)
+            iteration_trace['verification'] = verification
+
+            # Step 5: Reinterpret (LLM)
+            reinterpretation = self.reinterpret(solutions, formal_query)
+            iteration_trace['reinterpretation'] = reinterpretation
 
             trace['iterations'].append(iteration_trace)
 
-            # Step 6: Revise - check if we need another iteration
-            break
+            # Update top-level trace with latest results
+            trace['solutions'] = solutions
+            trace['verification'] = verification
+            trace['reinterpretation'] = reinterpretation
+            if iteration == 0:
+                trace['interpretations'] = interpretations
+
+            # Step 6: Revise - stop if knowledge base converged
+            if not new_facts_added:
+                break
+            if iteration > 0 and not solutions:
+                break
 
         return trace
 

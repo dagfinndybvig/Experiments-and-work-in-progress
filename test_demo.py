@@ -116,6 +116,24 @@ two_step_prereq(A, C) :- before(A, B), before(B, C).
         names = {s.get("X") for s in trace["solutions"]}
         self.assertIn("mary", names)
 
+    def test_loop_converges_early(self):
+        """The Revise loop stops early when the knowledge base converges."""
+        self.engine.facts.clear()
+        self.engine.rules.clear()
+        trace = self.discourse.loop(
+            "John is the parent of Mary. Mary is the parent of Bob. Who is the parent of Bob?",
+            domain="family",
+            max_iterations=5
+        )
+        # Iteration 1: domain-specific facts.
+        # Iteration 2: broader interpretation finds new (noisy) facts.
+        # Iteration 3: no new facts -> converges.
+        self.assertLess(len(trace["iterations"]), 5,
+                        "Loop should converge before max_iterations")
+        self.assertIn("solutions", trace)
+        names = {s.get("X") for s in trace["solutions"]}
+        self.assertIn("mary", names)
+
     def test_discourse_interpret_family(self):
         """Discourse interprets a family statement into Prolog syntax."""
         result = self.discourse.interpret("John is the father of Mary.", domain="family")
