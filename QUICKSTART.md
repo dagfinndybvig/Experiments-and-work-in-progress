@@ -38,7 +38,7 @@ The essays build on each other. Suggested order:
 2. **Symbolic Forms and the Plural Mind** ([MD](Symbolic_Forms_and_the_Plural_Mind.md))  
    Cassirer: language alone is not enough. Alternate version also available.
 
-3. **The Cartesian Moment** ([MD](The_Cartesian_Moment.md))  
+3. **The Cartesian Moment** ([MD](The%20Cartesian%20Moment.md))  
    Descartes' *Geometry* as the foundational symbolic form. Alternate version also available.
 
 4. **From Halting Problem to Imitation Game** ([MD](From%20Halting%20Problem%20to%20Imitation%20Game.md))  
