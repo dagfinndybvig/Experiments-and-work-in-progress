@@ -23,7 +23,7 @@ python test_demo.py
 **What you just saw:** A pure-Python Prolog engine running syllogisms, family trees, expert systems, and planning — all driven by a regex-based natural-language layer. The code is ~400 lines and readable end-to-end.
 
 **Next steps:**
-- Install SWI-Prolog + `pyswip` (see [SETUP.md](SETUP.md)) and run `python neuro_symbolic_demo_prolog.py` for real recursion and lists.
+- Install SWI-Prolog + `pyswip` (see [SETUP.md](SETUP.md)) — this upgrades your Geometry from a toy engine to real SWI-Prolog, enabling Demo 6 (recursion, lists) and full reasoning power. Then run `python neuro_symbolic_demo_prolog.py`.
 - Install Ollama (see [SETUP.md](SETUP.md)) and run `python neuro_symbolic_demo_ollama.py` to see a real LLM drive the loop.
 
 ---

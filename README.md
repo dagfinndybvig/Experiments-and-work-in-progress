@@ -54,6 +54,10 @@ To test the ideas from the Plato-to-Prolog essay, three implementations of the n
 | Ollama demos (NL -> LLM -> Prolog -> NL) | No | No | Yes (4 scenarios) |
 | Best for | Reading the whole engine; running anywhere | Plugging in a real LLM that emits idiomatic Prolog | **Running the loop on an actual LLM** |
 
+> 🔑 **The Critical Bridge: pyswip**
+> 
+> The jump from the first column to the other two is powered by `pyswip` — the Python-SWI-Prolog bridge that transforms Geometry from a *demonstration* into a *powerhouse*. Without it, you get a ~400-line toy Prolog limited to shallow, non-recursive reasoning. With `pyswip`, you get the full SWI-Prolog engine: unbounded recursion, list operations, negation, and constraint solving. It's the difference between reading about logic programming and *running* it at full strength.
+
 The zero-dependency version is a readable artifact: the entire backward-chaining engine is ~400 lines you can follow. The Prolog-backed version removes the ceiling of the toy engine (no lists, no real recursion, depth-limited) so the formal-constraint half of the loop can do what the essay actually claims for it. The Ollama-backed version then replaces the regex Discourse with a real local LLM — and degrades gracefully to the regex layer when Ollama is not running, so it works with no LLM installed.
 
 ### Running the zero-dependency version

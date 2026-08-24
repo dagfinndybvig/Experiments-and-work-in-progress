@@ -112,6 +112,8 @@ SWI-Prolog is either not installed or not on your PATH. Re-run the platform-spec
 
 Run `pip install pyswip` (or `pip install -r requirements.txt`).
 
+**Why pyswip matters**: It's the Python-SWI-Prolog interface that lets your Python code drive the real Prolog engine. Without `pyswip`, the Prolog and Ollama demos can only use the limited toy engine (~400 lines of pure Python) which cannot handle recursion, lists, or deep reasoning chains.
+
 ### Ollama demo hangs or times out
 
 Ensure Ollama is running (`ollama serve`) and the model is pulled (`ollama pull qwen2.5:7b`). The demo will fall back to regex mode if Ollama is unreachable, but this check has a short timeout; if Ollama is starting up, wait a moment and retry.
