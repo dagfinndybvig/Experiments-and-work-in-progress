@@ -146,6 +146,8 @@ The game-theoretic paper, read in this light, is not just one contribution among
 
 The **pattern of the others** in this repository is therefore one of **convergent evolution**: different philosophical traditions, historical lineages, and technical approaches all pointing toward the same solution. The game-theoretic synthesis makes this pattern explicit. The others make it **inevitable**.
 
+Looking at game theory as prescriptive rather than descriptive mirrors the Kantian version of the Copernican turn: just as Kant argued that we must conform our knowledge to the structures of the mind rather than the other way around, so too game theory shifts from describing how agents actually behave to prescribing how rational agents *ought* to behave under idealized conditions.
+
 ---
 
 ## References
