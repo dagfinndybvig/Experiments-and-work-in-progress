@@ -35,6 +35,10 @@ A fifth essay, **The Fork and the Form** ([MD](The_Fork_and_the_Form.md)), situa
 
 A sixth essay, **From Plato to Prolog to Prompts** ([MD](From_Plato_to_Prolog_to_Prompts.md)), extends the historical arc back to its origins in ancient Greece, arguing that Prolog and GOFAI were not failed paradigms but early instantiations of the Platonic-Aristotelian vision of structured representation and reasoning — and that modern neuro-symbolic AI finally provides the missing interface between formal systems and the open world.
 
+A seventh essay, **From Axioms to Inference: A Synthesis of Game Theory, Behavioral Economics, and Machine Intelligence** ([MD](game_theory_llms_kant_synthesis.md)), applies the series' core dual-engine architecture to game theory, mapping LLMs to Kahneman's System 1 and classical game theory to Kant's Noumenal realm.
+
+An eighth essay, **Game Theory, Practical Reason, and AI** ([MD](Game_theory_practical_reason_AI.md)), analyzes the game theory synthesis as a lens for understanding the convergent patterns across the entire series, arguing that intelligence emerges from neuro-symbolic synthesis rather than any single symbolic form.
+
 Alternate versions of the second and third essays are also available: **Symbolic Forms and the Plural Mind (Alternate Version)** ([MD](Symbolic_Forms_and_the_Plural_Mind_Alternate_Version.md)) and **The Cartesian Moment (Alternate Version)** ([MD](The_Cartesian_Moment_Alternate_Version.md)).
 
 ## Neuro-Symbolic AI Demonstration

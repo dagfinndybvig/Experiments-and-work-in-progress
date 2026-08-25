@@ -53,6 +53,12 @@ The essays build on each other. Suggested order:
 7. **From Plato to Prolog to Prompts** ([MD](From_Plato_to_Prolog_to_Prompts.md))  
    The historical arc: why Prolog/GOFAI were not failed paradigms, and how neuro-symbolic AI completes the vision.
 
+8. **From Axioms to Inference: A Synthesis of Game Theory, Behavioral Economics, and Machine Intelligence** ([MD](game_theory_llms_kant_synthesis.md))  
+   Game theory meets the dual-engine architecture: LLMs as System 1, game theory as System 2.
+
+9. **Game Theory, Practical Reason, and AI** ([MD](Game_theory_practical_reason_AI.md))  
+   Meta-analysis: how the game theory synthesis reveals the convergent patterns across the entire series.
+
 **After reading:** Run the three demo scripts to see the architecture the essays describe.
 
 ---
