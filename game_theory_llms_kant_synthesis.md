@@ -28,7 +28,7 @@ Because LLMs acquire their underlying structures from human textual artifacts, t
 ```
                          +-- Raw Inference -------> Kahneman's System 1
                          |                          (Associative, Heuristic, Fast)
-  Inductive LLM Machine -┤
+  Inductive LLM Machine -|
                          |
                          +-- Scaffolded Prompting -> Kahneman's System 2
                              (Chain-of-Thought)     (Analytical, Sequential, Slow)
@@ -55,24 +55,24 @@ To build artificial agents that possess both empirical adaptability and normativ
 [ Unstructured Real-World Input ]
                |
                v
-     +-------------------┐
+     +-------------------v
      |  LLM Front-End    |  <-- PHENOMENAL LAYER (System 1)
      |  (Interpreter)    |      Extracts contextual nuance, player intents,
-     +---------┬---------┘      and environment dynamics into formal specs.
+     +---------<----------->      and environment dynamics into formal specs.
                |
                | Abstract Payoff Matrix / Symbolic Strategy Space
                v
-     +-------------------┐
+     +-------------------v
      |  Deductive Core   |  <-- NOUMENAL LAYER (System 2)
      |  (Solver Engine)  |      Computes game-theoretic equilibria and verifies
-     +---------┬---------┘      Kantian universalizability invariants.
+     +---------<----------->      Kantian universalizability invariants.
                |
                | Validated Optimal Action Plan
                v
-     +-------------------┐
+     +-------------------v
      |  LLM Back-End     |  <-- EMPIRICAL EXECUTION LAYER
      |   (Translator)    |      Converts bounded strategy back into fluent
-     +---------┬---------┘      natural language, API calls, or negotiations.
+     +---------<----------->      natural language, API calls, or negotiations.
                |
                v
      [ Verified System Action ]
@@ -95,4 +95,4 @@ Tracing the continuum of formal systems beyond multi-agent environments leads to
 3. **The Universe as Computation:** In digital physics (Fredkin, Wolfram) and the Everettian Universal Wave Function ($\Psi$), the cosmos itself represents a single 0-player cellular automaton unfolding across spacetime.
 
 ### The Agentic Paradox
-Within this deterministic, 0-player universe, bounded subsystems (biological organisms, AI models) lack complete access to global state data. To navigate environmental uncertainty, these local sub-routines construct internal approximations—simulating themselves and others as autonomous actors in an $N$-player game. Human consciousness and artificial agency represent emergent multi-player heuristics operating within a zero-player universe.
+Within this deterministic, 0-player universe, bounded subsystems (biological organisms, AI models) lack complete access to global state data. To navigate environmental uncertainty, these local sub-routines construct internal approximations--simulating themselves and others as autonomous actors in an $N$-player game. Human consciousness and artificial agency represent emergent multi-player heuristics operating within a zero-player universe.
