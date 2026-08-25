@@ -10,9 +10,9 @@ The intersection of artificial intelligence and formal economic theory reveals a
 
 | Economic & Cognitive Dimension | Deductive Framework (*Theory of Games*) | Inductive Framework (Large Language Models) |
 | :--- | :--- | :--- |
-| **Foundational Premise** | **First Principles:** Axiomatic rationality and expected utility maximization ($U_i$). | **Empirical Statistics:** Distributional learning over billions of human decision traces. |
+| **Foundational Premise** | **First Principles:** Axiomatic rationality and expected utility maximization (U_i). | **Empirical Statistics:** Distributional learning over billions of human decision traces. |
 | **Equilibrium Mechanism** | **Mathematical Derivation:** Direct computation of Nash, Minimax, or Subgame Perfect Equilibria. | **Contextual Completion:** Autoregressive prediction of statistically probable strategic responses. |
-| **Depth of Reasoning** | **Infinite ($k \to \infinity$):** Assumes complete mutual hyper-rationality ("I know that you know..."). | **Bounded Level-$k$ ($k \approx 1\text{--}2$):** Mirrors empirical human cognitive limits in static setups. |
+| **Depth of Reasoning** | **Infinite (k -> infinity):** Assumes complete mutual hyper-rationality ("I know that you know..."). | **Bounded Level-k (k ~= 1--2):** Mirrors empirical human cognitive limits in static setups. |
 | **Contextual Robustness** | **Invariant to Framing:** Decisions are strictly dictated by numerical payoff matrices. | **Framing-Sensitive:** Highly responsive to persona, phrasing, and semantic context. |
 
 ### Convergence vs. Divergence Dynamics
@@ -90,9 +90,9 @@ Tracing the continuum of formal systems beyond multi-agent environments leads to
 ```
 
 ### Properties of Zero-Player Systems
-1. **Absence of Teleology:** Unlike 1-player optimization problems or $N$-player strategic games, a 0-player game lacks subjective utility functions, goals, or external agency.
-2. **Automated Unfolding:** System progression is purely deterministic, governed by invariant transition rules ($R$) acting on initial boundary conditions ($S_0$).
-3. **The Universe as Computation:** In digital physics (Fredkin, Wolfram) and the Everettian Universal Wave Function ($\Psi$), the cosmos itself represents a single 0-player cellular automaton unfolding across spacetime.
+1. **Absence of Teleology:** Unlike 1-player optimization problems or N-player strategic games, a 0-player game lacks subjective utility functions, goals, or external agency.
+2. **Automated Unfolding:** System progression is purely deterministic, governed by invariant transition rules (R) acting on initial boundary conditions (S_0).
+3. **The Universe as Computation:** In digital physics (Fredkin, Wolfram) and the Everettian Universal Wave Function (Psi), the cosmos itself represents a single 0-player cellular automaton unfolding across spacetime.
 
 ### The Agentic Paradox
-Within this deterministic, 0-player universe, bounded subsystems (biological organisms, AI models) lack complete access to global state data. To navigate environmental uncertainty, these local sub-routines construct internal approximations--simulating themselves and others as autonomous actors in an $N$-player game. Human consciousness and artificial agency represent emergent multi-player heuristics operating within a zero-player universe.
+Within this deterministic, 0-player universe, bounded subsystems (biological organisms, AI models) lack complete access to global state data. To navigate environmental uncertainty, these local sub-routines construct internal approximations--simulating themselves and others as autonomous actors in an N-player game. Human consciousness and artificial agency represent emergent multi-player heuristics operating within a zero-player universe.
