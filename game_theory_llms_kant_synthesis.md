@@ -98,3 +98,5 @@ Tracing the continuum of formal systems beyond multi-agent environments leads to
 
 ### The Agentic Paradox
 Within this deterministic, 0-player universe, bounded subsystems (biological organisms, AI models) lack complete access to global state data. To navigate environmental uncertainty, these local sub-routines construct internal approximations--simulating themselves and others as autonomous actors in an N-player game. Human consciousness and artificial agency represent emergent multi-player heuristics operating within a zero-player universe.
+
+Looking at game theory as prescriptive rather than descriptive mirrors the Kantian version of the Copernican turn: just as Kant argued that we must conform our knowledge to the structures of the mind rather than the other way around, so too game theory shifts from describing how agents actually behave to prescribing how rational agents *ought* to behave under idealized conditions.
