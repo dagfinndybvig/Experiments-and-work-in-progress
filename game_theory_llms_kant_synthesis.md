@@ -55,24 +55,24 @@ To build artificial agents that possess both empirical adaptability and normativ
 [ Unstructured Real-World Input ]
                |
                v
-     +-------------------v
+     +-------------------+
      |  LLM Front-End    |  <-- PHENOMENAL LAYER (System 1)
      |  (Interpreter)    |      Extracts contextual nuance, player intents,
-     +---------<----------->      and environment dynamics into formal specs.
+     +---------+----------+      and environment dynamics into formal specs.
                |
                | Abstract Payoff Matrix / Symbolic Strategy Space
                v
-     +-------------------v
+     +-------------------+
      |  Deductive Core   |  <-- NOUMENAL LAYER (System 2)
      |  (Solver Engine)  |      Computes game-theoretic equilibria and verifies
-     +---------<----------->      Kantian universalizability invariants.
+     +---------+----------+      Kantian universalizability invariants.
                |
                | Validated Optimal Action Plan
                v
-     +-------------------v
+     +-------------------+
      |  LLM Back-End     |  <-- EMPIRICAL EXECUTION LAYER
      |   (Translator)    |      Converts bounded strategy back into fluent
-     +---------<----------->      natural language, API calls, or negotiations.
+     +---------+----------+      natural language, API calls, or negotiations.
                |
                v
      [ Verified System Action ]
