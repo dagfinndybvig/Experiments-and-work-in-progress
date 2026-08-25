@@ -15,6 +15,8 @@ The intersection of artificial intelligence and formal economic theory reveals a
 | **Depth of Reasoning** | **Infinite (k -> infinity):** Assumes complete mutual hyper-rationality ("I know that you know..."). | **Bounded Level-k (k ~= 1--2):** Mirrors empirical human cognitive limits in static setups. |
 | **Contextual Robustness** | **Invariant to Framing:** Decisions are strictly dictated by numerical payoff matrices. | **Framing-Sensitive:** Highly responsive to persona, phrasing, and semantic context. |
 
+> *Aside:* Actually, both game theory and deep learning rely on optimization, but the first optimizes with regard to the future, in view of formal constraints, while the latter looks backwards at huge amounts of data it wants to fit.
+
 ### Convergence vs. Divergence Dynamics
 * **Dynamic/Repeated Interactions (Convergence):** When multi-agent LLM systems engage in iterative interactions (e.g., iterated Prisoner's Dilemmas or public goods allocation), their behavior organically converges toward classical game-theoretic equilibria. Best-response dynamics emerge naturally via in-context token updating.
 * **Single-Shot Interactions (Divergence):** In static, non-iterative contexts, LLMs diverge from axiomatic game theory. Influenced by training corpora and Reinforcement Learning from Human Feedback (RLHF), LLMs systematically exhibit pro-sociality, loss aversion, and framing sensitivities.
