@@ -18,6 +18,8 @@ Each paper addresses a variant of the same problem: How can a system be both **e
 
 The game-theoretic paper is therefore not merely one contribution among others. It is the **explicit blueprint** that the other papers implicitly follow. Its value as an interpretive key lies in its clarity: where other papers trace historical lineages (Plato→Prolog→Prompts), philosophical genealogies (Fodor→Wittgenstein→Cassirer), or technical architectures (LLM→Formal System→LLM), the game-theoretic synthesis **names the pattern**—a dual-layered system where inductive front-ends (LLMs) and deductive cores (game theory, theorem provers, Prolog) operate in a feedback loop.
 
+This dual-engine architecture finds its philosophical foundation in Kant’s dictum: *Thoughts without content are empty, intuitions without concepts are blind.* The Phenomenal layer provides the content (intuitions of the world), while the Noumenal layer supplies the concepts (formal structures of reasoning). Only their synthesis yields the symbolic mobility that defines intelligence.
+
 ---
 
 ## 2. The Methodological Paradox as Series Throughline
