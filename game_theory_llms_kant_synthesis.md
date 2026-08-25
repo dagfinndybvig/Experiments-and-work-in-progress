@@ -1,5 +1,7 @@
 # From Axioms to Inference: A Synthesis of Game Theory, Behavioral Economics, and Machine Intelligence
 
+*Dagfinn D. Dybvig and Google Gemini*
+
 ---
 
 ## 1. The Methodological Paradox: Deduction vs. Induction
