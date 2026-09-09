@@ -59,6 +59,9 @@ The essays build on each other. Suggested order:
 9. **Game Theory, Practical Reason, and AI** ([MD](Game_theory_practical_reason_AI.md))  
    Meta-analysis: how the game theory synthesis reveals the convergent patterns across the entire series.
 
+10. **The Algebraic Mind and Its Acquired Languages** ([MD](Algebraic.md))  
+    Gary Marcus on variables and systematic generalization: how cognitive machinery relates to acquired symbolic forms and accountable AI.
+
 **After reading:** Run the three demo scripts to see the architecture the essays describe.
 
 ---

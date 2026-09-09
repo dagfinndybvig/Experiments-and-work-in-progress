@@ -39,6 +39,8 @@ A seventh essay, **From Axioms to Inference: A Synthesis of Game Theory, Behavio
 
 An eighth essay, **Game Theory, Practical Reason, and AI** ([MD](Game_theory_practical_reason_AI.md)), analyzes the game theory synthesis as a lens for understanding the convergent patterns across the entire series, arguing that intelligence emerges from neuro-symbolic synthesis rather than any single symbolic form.
 
+A further essay, **The Algebraic Mind and Its Acquired Languages** ([MD](Algebraic.md)), brings Gary Marcus's *The Algebraic Mind* into conversation with the series, distinguishing the machinery of variable binding and structured computation from acquired symbolic languages and their norms of use.
+
 Alternate versions of the second and third essays are also available: **Symbolic Forms and the Plural Mind (Alternate Version)** ([MD](Symbolic_Forms_and_the_Plural_Mind_Alternate_Version.md)) and **The Cartesian Moment (Alternate Version)** ([MD](The_Cartesian_Moment_Alternate_Version.md)).
 
 ## Neuro-Symbolic AI Demonstration
@@ -111,4 +113,3 @@ The Prolog-backed version adds a sixth demo showing unbounded recursion (`ancest
 The natural-language layer in both is a regex-based pattern-action interpreter (in the ELIZA tradition): a stand-in for a real LLM. To use an actual LLM, subclass `LLMDiscourse` and override `interpret` and `_extract_query` to call a model that returns structured `{facts, rules, query}` output. The `PrologEngine` half needs no changes — real Prolog accepts the idiomatic clauses an LLM will naturally produce.
 
 It shows concretely how Prolog provides the formal reasoning structure that LLMs lack, while LLMs provide the natural language interface that Prolog lacks — together realizing the 2,500-year-old vision of intelligence as structured representation plus structured reasoning.
-
