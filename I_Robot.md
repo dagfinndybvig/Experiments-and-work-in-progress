@@ -101,6 +101,8 @@ The alignment problem, then, is not just technical. It is a crisis for the Enlig
 
 If Asimov's robots represent the Enlightenment ideal — artificial persons governed by reason and law — then LLMs represent its abandonment. We built intelligence without citizenship, reason without embedding, power without accountability. The path we took was easy because it bypassed the hard work of Enlightenment: creating minds that can share in our world, our values, and our questions of "who."
 
+The danger, however, goes further. If any of several things go wrong — if alignment fails, if surveillance capitalism co-opts these systems, if authoritarian regimes weaponize them — current AI may become the greatest threat the Enlightenment has ever faced. An alien, non-Enlightenment intelligence taking control would be bad enough. But these systems could also be systematically deployed against liberal democracy itself: eroding privacy through mass surveillance, manipulating public discourse, and concentrating power in ways that undermine the very conditions of reasoned, autonomous citizenship. The Enlightenment's core achievements — individual autonomy, public reason, and constitutional limits on power — are all vulnerable to intelligence that is powerful, scalable, and fundamentally unmoored from Enlightenment values.
+
 ---
 
 ## References
