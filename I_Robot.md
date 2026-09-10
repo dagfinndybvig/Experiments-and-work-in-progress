@@ -93,6 +93,16 @@ Perhaps the future of AI lies in returning to Asimov's vision — not as a techn
 
 ---
 
+## Coda: The Enlightenment Project
+
+Kant's *Critique of Practical Reason* and Asimov's *I, Robot* share a common foundation: they are both Enlightenment texts. Kant sought to ground moral law in universal reason; Asimov imagined a galactic civilization where robots, governed by rational laws, would serve human progress. Both assume that intelligence and morality must be embedded in a shared, intelligible framework — that reason is not merely computation, but *participation*.
+
+The alignment problem, then, is not just technical. It is a crisis for the Enlightenment project itself. We have created systems of remarkable power that cannot be integrated into the moral and cognitive framework that the Enlightenment bequeathed us. They lack the grounding — spatio-temporal and intersubjective — that would make them participants rather than simulations.
+
+If Asimov's robots represent the Enlightenment ideal — artificial persons governed by reason and law — then LLMs represent its abandonment. We built intelligence without citizenship, reason without embedding, power without accountability. The path we took was easy because it bypassed the hard work of Enlightenment: creating minds that can share in our world, our values, and our questions of "who."
+
+---
+
 ## References
 
 Asimov, Isaac. *I, Robot*. New York: Gnome Press, 1950.
