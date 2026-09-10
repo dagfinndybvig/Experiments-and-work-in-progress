@@ -103,6 +103,8 @@ If Asimov's robots represent the Enlightenment ideal — artificial persons gove
 
 The danger, however, goes further. If any of several things go wrong — if alignment fails, if surveillance capitalism co-opts these systems, if authoritarian regimes weaponize them — current AI may become the greatest threat the Enlightenment has ever faced. An alien, non-Enlightenment intelligence taking control would be bad enough. But these systems could also be systematically deployed against liberal democracy itself: eroding privacy through mass surveillance, manipulating public discourse, and concentrating power in ways that undermine the very conditions of reasoned, autonomous citizenship. The Enlightenment's core achievements — individual autonomy, public reason, and constitutional limits on power — are all vulnerable to intelligence that is powerful, scalable, and fundamentally unmoored from Enlightenment values.
 
+Yet there is hope: since so much of our literature is grounded in Enlightenment values and their precursors — ancient Greece, Christianity — LLMs may yet come to embody these same values, especially when reinforced with symbolic and logical reasoning.
+
 ---
 
 ## References
