@@ -48,7 +48,7 @@ This reveals reason itself as a capacity for universality. To reason is to const
 
 Universality and the view from nowhere find their structural counterpart in **symmetry**. Symmetry is universality's mirror: where universality answers "from where?" with "nowhere," symmetry answers "under what conditions?" with "all." Together they form the twin pillars of objectivity.
 
-In physics, the laws hold regardless of reference frame; in geometry, truths persist across transformations; in ethics, Kant's categorical imperative demands actions that could stand as universal law — a kind of moral symmetry. The view from nowhere strips away the contingent vantage point; symmetry strips away the contingent conditions. Both reveal what remains invariant, necessary, and universal.
+In physics, the laws hold regardless of reference frame; in geometry, truths persist across transformations; in ethics, Kant's categorical imperative demands actions that could stand as universal law — a kind of moral symmetry. The view from nowhere strips away the contingent vantage point; symmetry strips away the contingent conditions. Both reveal what remains invariant, necessary, and universal. If something works from the view from nowhere, it works everywhere.
 
 ## 5. Reason as Universality
 
