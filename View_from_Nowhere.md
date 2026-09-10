@@ -44,6 +44,12 @@ But the view from nowhere is not a god's-eye perspective in the sense of an impo
 
 This reveals reason itself as a capacity for universality. To reason is to construct a view from nowhere — to model the world or each other from a perspective that transcends the particular. The necessity that reason apprehends is the necessity of relations that hold from this universal perspective.
 
+## 4.5 Symmetry: The Structural Pendant to Universality
+
+Universality and the view from nowhere find their structural counterpart in **symmetry**. Symmetry is universality's mirror: where universality answers "from where?" with "nowhere," symmetry answers "under what conditions?" with "all." Together they form the twin pillars of objectivity.
+
+In physics, the laws hold regardless of reference frame; in geometry, truths persist across transformations; in ethics, Kant's categorical imperative demands actions that could stand as universal law — a kind of moral symmetry. The view from nowhere strips away the contingent vantage point; symmetry strips away the contingent conditions. Both reveal what remains invariant, necessary, and universal.
+
 ## 5. Reason as Universality
 
 The synthesis, then, is this: **reason is the capacity to achieve a view from nowhere, and that capacity is grounded in structured media that supply universality.**
